@@ -116,18 +116,23 @@
   .supp-caption b{color:var(--olive);font-weight:600;}
   .supp-caption.hit b{color:var(--olive-2);}
 
-  /* partner card */
-  .partner-card[hidden]{display:none;}
-  .partner-card .p-top{display:flex;align-items:center;gap:12px;}
-  .partner-card .p-badge{width:40px;height:40px;flex:none;border-radius:10px;background:var(--olive-2);
-    color:#fff;font-family:"Barlow Condensed",sans-serif;font-weight:700;font-size:1.3rem;
-    display:flex;align-items:center;justify-content:center;}
-  .partner-card .p-name{font-family:"Barlow Condensed",sans-serif;font-weight:700;font-size:1.15rem;text-transform:uppercase;}
-  .partner-card .p-sub{font-family:"IBM Plex Mono",monospace;font-size:.72rem;color:var(--soft);}
-  .p-bar{height:6px;background:var(--band);border-radius:100px;overflow:hidden;margin:14px 0 6px;}
-  .p-bar>i{display:block;height:100%;background:var(--olive-2);border-radius:100px;width:0;}
-  .p-last{font-family:"IBM Plex Mono",monospace;font-size:.72rem;color:var(--soft);}
-  .partner-empty{color:var(--soft);font-size:.9rem;}
+  /* weight feedback (in log-this-session) */
+  .wt-block{margin:2px 0 16px;}
+  .wt-title{font-family:"IBM Plex Mono",monospace;font-size:.68rem;letter-spacing:.1em;
+    text-transform:uppercase;color:var(--soft);margin-bottom:8px;}
+  .wt-row{padding:11px 0;border-top:1px solid var(--line);}
+  .wt-row:first-of-type{border-top:none;}
+  .wt-head{display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin-bottom:8px;}
+  .wt-name{font-weight:600;font-size:.9rem;}
+  .wt-cur{font-family:"IBM Plex Mono",monospace;font-size:.78rem;color:var(--olive);white-space:nowrap;}
+  .wt-fb{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;}
+  .wt-fb button{border:1px solid var(--line);background:var(--paper);border-radius:8px;padding:9px 6px;
+    font-family:"Inter",sans-serif;font-size:.8rem;color:var(--soft);cursor:pointer;transition:all .12s;}
+  .wt-fb button.sel{color:#fff;border-color:transparent;font-weight:600;}
+  .wt-fb button.sel.down{background:var(--flag);}
+  .wt-fb button.sel.good{background:var(--olive);}
+  .wt-fb button.sel.up{background:var(--olive-2);}
+  .wt-note{font-family:"IBM Plex Mono",monospace;font-size:.68rem;color:var(--soft);margin-top:7px;}
 
   .hist-head{display:flex;justify-content:space-between;align-items:baseline;margin:26px 0 12px;}
   .hist-head h2{font-family:"Barlow Condensed",sans-serif;font-weight:700;text-transform:uppercase;
@@ -150,6 +155,7 @@
   .entry .info .l1{font-weight:600;font-size:.9rem;}
   .entry .info .l2{font-family:"IBM Plex Mono",monospace;font-size:.72rem;color:var(--soft);
     white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .entry .info .l2.wtline{white-space:normal;overflow:visible;color:var(--olive);margin-top:2px;}
   .entry .d{font-family:"IBM Plex Mono",monospace;font-size:.72rem;color:#fff;font-weight:600;
     padding:4px 9px;border-radius:100px;flex:none;}
 
@@ -222,6 +228,7 @@
     <p class="hint">Tap how hard it felt, add a note if anything's worth flagging, then mark it done.</p>
     <div class="diff-label"><span>Easy</span><span>Difficulty</span><span>Brutal</span></div>
     <div class="diff" id="diff"></div>
+    <div class="wt-block" id="wt-block"></div>
     <textarea id="notes" placeholder="Optional — e.g. 'left knee twinged on lunges' or 'runs felt easier'"></textarea>
     <button class="complete" id="complete" disabled>Mark complete</button>
     <div class="miss" id="miss"></div>
@@ -252,11 +259,6 @@
     <div class="supp-strip" id="supp-strip"></div>
   </div>
 
-  <div class="supp-card partner-card" id="partner-card" hidden>
-    <h2>Partner progress</h2>
-    <div id="partner-body"></div>
-  </div>
-
   <div class="hist-head">
     <h2>Workout history</h2>
     <div class="actions">
@@ -279,8 +281,8 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult,
          onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-import { initializeFirestore, getFirestore, persistentLocalCache, doc, getDoc, setDoc,
-         collection, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { initializeFirestore, getFirestore, persistentLocalCache, doc, getDoc, setDoc
+       } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 // ---- Firebase config (public identifiers, safe to ship) ----
 const firebaseConfig = {
@@ -309,22 +311,22 @@ const PHASE1 = {
   A:{nm:"Pull + Run base",tag:"Pulling pattern · easy running",ex:[
     {name:"Dead hang",dose:"3 × 15–20s"},
     {name:"Inverted row (barbell/TRX)",dose:"3 × 8–10",note:"More upright = easier · more horizontal = harder"},
-    {name:"Lat pulldown or assisted pull-up",dose:"3 × 8–10"},
+    {name:"Lat pulldown or assisted pull-up",dose:"3 × 8–10",w:{def:100,step:10}},
     {name:"Incline push-ups",dose:"3 × 8–12"},
     {name:"Run / walk",dose:"15 min",note:"Jog 1 min / walk 2 min"}]},
   B:{nm:"Squat + Intervals",tag:"Legs · interval running",ex:[
-    {name:"Goblet squat",dose:"3 × 10"},
+    {name:"Goblet squat",dose:"3 × 10",w:{def:25,step:5}},
     {name:"Bodyweight squats",dose:"3 × 15",note:"Hip crease below the knee"},
     {name:"Walking lunges",dose:"2 × 10 / leg"},
-    {name:"DB Romanian deadlift",dose:"2 × 10"},
+    {name:"DB Romanian deadlift",dose:"2 × 10",w:{def:30,step:5}},
     {name:"Run / walk intervals",dose:"12–15 min",note:"Jog 1 min / walk 1–2 min"},
     {name:"Plank",dose:"3 × 20–30s"}]},
   C:{nm:"Push + Pull",tag:"Pressing · more pulling volume",ex:[
-    {name:"DB bench press (or incline push-ups)",dose:"3 × 8–10"},
+    {name:"DB bench press (or incline push-ups)",dose:"3 × 8–10",w:{def:30,step:5}},
     {name:"Band-assisted pull-ups",dose:"3 × 5–8",note:"A band that lets you do clean reps"},
     {name:"Inverted row (barbell/TRX)",dose:"3 × 10"},
     {name:"Incline / knee push-ups",dose:"3 × clean",note:"Leave 2 in the tank"},
-    {name:"Overhead DB press",dose:"2 × 10"}]},
+    {name:"Overhead DB press",dose:"2 × 10",w:{def:20,step:5}}]},
   D:{nm:"Mixed conditioning",tag:"A first taste of Murph",ex:[
     {name:"Easy jog",dose:"5 min"},
     {name:"Circuit — unhurried",dose:"5 rounds",note:"2 assisted pull-ups · 5 incline push-ups · 10 squats"},
@@ -340,8 +342,8 @@ let state={completed:[],supps:{}};
 let picked=null;
 let user=null;
 let userRef=null;
-let unsubUsers=null;
 let ready=false;
+let weightFb={};   // transient per-session weight feedback: exerciseName -> "down"|"good"|"up"
 
 const $=id=>document.getElementById(id);
 function diffColor(n){
@@ -362,6 +364,9 @@ function nameFor(email){ return NAMES[email] || (email? email.split("@")[0] : "A
 // "Everyday" target ≈ 0.8 g/lb; range spans 0.7–1.0.
 function proteinGoal(){ return state.bodyweight>0 ? Math.round(state.bodyweight*0.8) : null; }
 function proteinRange(){ return state.bodyweight>0 ? [Math.round(state.bodyweight*0.7), Math.round(state.bodyweight)] : null; }
+// Recommended working weight per exercise: the user's saved value, else the plan default.
+function exWeight(e){ return (state.weights && state.weights[e.name]!=null) ? state.weights[e.name] : e.w.def; }
+function weightedForDay(day){ return PHASE1[day].ex.filter(e=>e.w); }
 
 // Session #1 (Jul 13, 2026), logged in chat before the tracker existed — his baseline.
 function seedState(){
@@ -422,16 +427,9 @@ onAuthStateChanged(auth, async (u)=>{
     }
     user=u; hideOverlay();
     $("authbar").hidden=false; $("who").textContent=nameFor(email);
-    if(unsubUsers) unsubUsers();
-    unsubUsers=onSnapshot(collection(db,"users"), (qs)=>{
-      let partner=null;
-      qs.forEach(d=>{ if(d.id!==user.uid) partner=d.data(); });
-      renderPartner(partner);
-    }, ()=>{});
     await initUserData(email);
   } else {
     user=null; userRef=null;
-    if(unsubUsers){ unsubUsers(); unsubUsers=null; }
     showOverlay();
   }
 });
@@ -442,7 +440,7 @@ async function initUserData(email){
   try{ snap=await getDoc(userRef); }catch(e){}
   if(snap && snap.exists() && Array.isArray(snap.data().completed)){
     const d=snap.data();
-    state={completed:d.completed||[], supps:d.supps||{}, plan:d.plan||"murph-phase1", bodyweight:d.bodyweight||null};
+    state={completed:d.completed||[], supps:d.supps||{}, plan:d.plan||"murph-phase1", bodyweight:d.bodyweight||null, weights:d.weights||{}};
   }else{
     // New profile. Only the husband inherits the pre-cloud Session #1 backfill /
     // any log already stored on his device; everyone else starts clean.
@@ -450,13 +448,14 @@ async function initUserData(email){
       let legacy=null;
       try{ const raw=localStorage.getItem(LEGACY_KEY); if(raw) legacy=JSON.parse(raw); }catch(e){}
       state=(legacy && Array.isArray(legacy.completed) && legacy.completed.length)
-        ? {completed:legacy.completed, supps:legacy.supps||{}, plan:"murph-phase1"}
-        : {...seedState(), plan:"murph-phase1"};
+        ? {completed:legacy.completed, supps:legacy.supps||{}, plan:"murph-phase1", weights:legacy.weights||{}}
+        : {...seedState(), plan:"murph-phase1", weights:{}};
     }else{
-      state={completed:[], supps:{}, plan:"murph-phase1"};
+      state={completed:[], supps:{}, plan:"murph-phase1", weights:{}};
     }
     await save();
   }
+  if(!state.weights) state.weights={};
   ready=true;
   render();
 }
@@ -468,7 +467,7 @@ async function save(){
     try{
       await setDoc(userRef, {
         email:user.email, name:nameFor((user.email||"").toLowerCase()),
-        plan:state.plan||"murph-phase1", bodyweight:state.bodyweight||null,
+        plan:state.plan||"murph-phase1", bodyweight:state.bodyweight||null, weights:state.weights||{},
         completed:state.completed, supps:state.supps, updatedAt:Date.now()
       }, {merge:true});
     }catch(e){ console.warn("cloud save failed (will retry when online):", e); }
@@ -502,9 +501,41 @@ function renderNext(){
   const done=state.completed.length;
   const day=ORDER[done%4];
   const w=PHASE1[day];
-  let rows=w.ex.map(e=>'<div class="ex"><div class="row"><span class="name">'+e.name+'</span><span class="dose">'+e.dose+'</span></div>'+(e.note?'<div class="note">'+e.note+'</div>':'')+'</div>').join("");
+  let rows=w.ex.map(e=>{
+    const dose=e.w ? (e.dose+' · '+exWeight(e)+' lb') : e.dose;
+    return '<div class="ex"><div class="row"><span class="name">'+e.name+'</span><span class="dose">'+dose+'</span></div>'+(e.note?'<div class="note">'+e.note+'</div>':'')+'</div>';
+  }).join("");
   $("next-card").className="next fade-in";
   $("next-card").innerHTML='<div class="next-head"><div class="letter">'+day+'</div><div class="t"><div class="nm">'+w.nm+'</div><div class="tag">'+w.tag+'</div></div></div><div class="ex-list">'+rows+'</div>';
+}
+
+// Weight-feedback controls in the "Log this session" area for the current day's weighted lifts.
+function renderWeights(){
+  const day=ORDER[state.completed.length%4];
+  const list=weightedForDay(day);
+  const block=$("wt-block");
+  if(!list.length){ block.innerHTML=""; return; }
+  let html='<div class="wt-title">Weights — how did they feel?</div>';
+  list.forEach((e,i)=>{
+    const cur=exWeight(e);
+    const dir=weightFb[e.name]||"good";
+    const next = dir==="down" ? Math.max(e.w.step, cur-e.w.step) : dir==="up" ? cur+e.w.step : cur;
+    const note = dir==="good" ? "Next time: "+cur+" lb (unchanged)"
+               : "Next time: "+next+" lb ("+(dir==="down"?"lighter":"heavier")+")";
+    html+='<div class="wt-row"><div class="wt-head"><span class="wt-name">'+e.name+'</span><span class="wt-cur">'+cur+' lb today</span></div>'+
+      '<div class="wt-fb" data-idx="'+i+'">'+
+        '<button data-dir="down" class="'+(dir==="down"?"sel down":"")+'">Too heavy</button>'+
+        '<button data-dir="good" class="'+(dir==="good"?"sel good":"")+'">Just right</button>'+
+        '<button data-dir="up" class="'+(dir==="up"?"sel up":"")+'">Too light</button>'+
+      '</div><div class="wt-note">'+note+'</div></div>';
+  });
+  block.innerHTML=html;
+  block.querySelectorAll(".wt-fb").forEach(fb=>{
+    const ex=list[+fb.getAttribute("data-idx")].name;
+    fb.querySelectorAll("button").forEach(b=>{
+      b.onclick=()=>{ weightFb[ex]=b.getAttribute("data-dir"); renderWeights(); };
+    });
+  });
 }
 
 function renderProgress(){
@@ -521,7 +552,10 @@ function renderProgress(){
 function renderHist(){
   const h=$("hist");
   if(!state.completed.length){h.innerHTML='<div class="empty">No sessions logged yet — your first one starts the streak.</div>';return;}
-  h.innerHTML=[...state.completed].reverse().map(c=>'<div class="entry"><div class="badge">'+c.day+'</div><div class="info"><div class="l1">#'+c.session+' · '+PHASE1[c.day].nm+'</div><div class="l2">'+fmtDate(c.date)+(c.notes?' · '+c.notes.replace(/</g,"&lt;"):'')+'</div></div><div class="d" style="background:'+diffColor(c.difficulty)+'">'+c.difficulty+'/10</div></div>').join("");
+  h.innerHTML=[...state.completed].reverse().map(c=>{
+    const wLine=c.weights?'<div class="l2 wtline">'+Object.entries(c.weights).map(([n,w])=>n.replace(/</g,"&lt;")+' '+w+'lb').join(' · ')+'</div>':'';
+    return '<div class="entry"><div class="badge">'+c.day+'</div><div class="info"><div class="l1">#'+c.session+' · '+PHASE1[c.day].nm+'</div><div class="l2">'+fmtDate(c.date)+(c.notes?' · '+c.notes.replace(/</g,"&lt;"):'')+'</div>'+wLine+'</div><div class="d" style="background:'+diffColor(c.difficulty)+'">'+c.difficulty+'/10</div></div>';
+  }).join("");
 }
 
 function renderSupps(){
@@ -556,36 +590,15 @@ function renderSupps(){
   strip.innerHTML=cells.join("");
 }
 
-function renderPartner(p){
-  const card=$("partner-card"); const body=$("partner-body");
-  if(!p){ card.hidden=true; return; }
-  card.hidden=false;
-  const done=(p.completed||[]).length;
-  const pct=Math.round(Math.min(done,PHASE1_SESSIONS)/PHASE1_SESSIONS*100);
-  const name=p.name||nameFor((p.email||"").toLowerCase());
-  const initial=(name||"?").charAt(0).toUpperCase();
-  let last="No sessions logged yet.";
-  if(done){
-    const c=p.completed[p.completed.length-1];
-    last="Last · Day "+c.day+" — "+fmtDate(c.date)+" — "+c.difficulty+"/10";
-  }
-  body.innerHTML=
-    '<div class="p-top"><div class="p-badge">'+initial+'</div><div>'+
-      '<div class="p-name">'+name+'</div>'+
-      '<div class="p-sub">Session '+Math.min(done+1,PHASE1_SESSIONS)+' of '+PHASE1_SESSIONS+' · '+pct+'%</div>'+
-    '</div></div>'+
-    '<div class="p-bar"><i style="width:'+pct+'%"></i></div>'+
-    '<div class="p-last">'+last+'</div>';
-}
-
 function render(){
   if(!ready) return;
-  renderProgress();renderNext();renderHist();renderSupps();renderBanner();
+  renderProgress();renderNext();renderWeights();renderHist();renderSupps();renderBanner();
 }
 
 function cleanupDay(k){const s=state.supps[k];if(s&&!s.creatine&&s.protein==null)delete state.supps[k];}
 function resetInputs(){
   picked=null;
+  weightFb={};
   [...$("diff").children].forEach(c=>{c.classList.remove("sel");c.style.background="";});
   $("notes").value="";
   $("complete").disabled=true;
@@ -595,7 +608,20 @@ function resetInputs(){
 $("complete").onclick=async()=>{
   if(!picked){$("miss").textContent="Pick a difficulty first.";return;}
   const done=state.completed.length;
-  state.completed.push({session:done+1,day:ORDER[done%4],date:new Date().toISOString(),difficulty:picked,notes:$("notes").value.trim()});
+  const day=ORDER[done%4];
+  // Record the weight used per lift this session, and apply "too heavy/light" feedback to next time's recommendation.
+  const list=weightedForDay(day); const used={};
+  if(!state.weights) state.weights={};
+  list.forEach(e=>{
+    const cur=exWeight(e); used[e.name]=cur;
+    const dir=weightFb[e.name];
+    if(dir==="down") state.weights[e.name]=Math.max(e.w.step, cur-e.w.step);
+    else if(dir==="up") state.weights[e.name]=cur+e.w.step;
+    else state.weights[e.name]=cur;
+  });
+  const entry={session:done+1,day,date:new Date().toISOString(),difficulty:picked,notes:$("notes").value.trim()};
+  if(list.length) entry.weights=used;
+  state.completed.push(entry);
   resetInputs(); render(); await save();
   window.scrollTo({top:0,behavior:"smooth"});
 };
@@ -621,14 +647,23 @@ $("bw-save").onclick=async()=>{
 $("undo").onclick=async()=>{if(!state.completed.length)return;state.completed.pop();render();await save();};
 $("reset").onclick=async()=>{
   if(!confirm("Clear your entire log (workouts + supplements)? This can't be undone."))return;
-  state={completed:[],supps:{},plan:"murph-phase1",bodyweight:state.bodyweight||null};resetInputs();render();$("copy-panel").classList.remove("show");await save();
+  state={completed:[],supps:{},plan:"murph-phase1",bodyweight:state.bodyweight||null,weights:state.weights||{}};resetInputs();render();$("copy-panel").classList.remove("show");await save();
 };
 $("copy").onclick=async()=>{
   let txt="Murph Phase 1 — "+nameFor((user&&user.email||"").toLowerCase())+"'s session log:\n";
   if(state.bodyweight>0){ const rg=proteinRange(); txt+="Bodyweight: "+state.bodyweight+" lb · protein target ~"+proteinGoal()+" g/day (range "+rg[0]+"–"+rg[1]+")\n"; }
   if(state.completed.length){
-    state.completed.forEach(c=>{txt+="#"+c.session+" Day "+c.day+" ("+PHASE1[c.day].nm+") — "+fmtDate(c.date)+" — difficulty "+c.difficulty+"/10"+(c.notes?" — "+c.notes:"")+"\n";});
+    state.completed.forEach(c=>{
+      let line="#"+c.session+" Day "+c.day+" ("+PHASE1[c.day].nm+") — "+fmtDate(c.date)+" — difficulty "+c.difficulty+"/10";
+      if(c.weights) line+=" — weights: "+Object.entries(c.weights).map(([n,w])=>n+" "+w+"lb").join(", ");
+      if(c.notes) line+=" — "+c.notes;
+      txt+=line+"\n";
+    });
   }else{txt+="(none yet)\n";}
+  if(state.weights && Object.keys(state.weights).length){
+    txt+="\nCurrent recommended weights:\n";
+    Object.entries(state.weights).forEach(([n,w])=>{txt+=n+" — "+w+" lb\n";});
+  }
   const days=Object.keys(state.supps).sort();
   if(days.length){
     txt+="\nSupplements:\n";
