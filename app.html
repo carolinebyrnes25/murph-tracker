@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Murph Tracker — Phase 1</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#F3F4EF; --card:#FCFCFA; --ink:#1B1E19; --soft:#565B4F;
+    --line:#DDDED5; --olive:#3E4E2A; --olive-2:#6E8B3E; --band:#E7E8DF;
+    --flag:#BF4A2B; --shadow:0 1px 2px rgba(27,30,25,.04),0 8px 24px rgba(27,30,25,.05);
+  }
+  *{box-sizing:border-box;}
+  html{-webkit-text-size-adjust:100%;}
+  body{margin:0;background:var(--paper);color:var(--ink);
+    font-family:"Inter",system-ui,-apple-system,sans-serif;font-size:16px;line-height:1.55;
+    -webkit-font-smoothing:antialiased;}
+  .wrap{max-width:600px;margin:0 auto;padding:24px 20px 80px;}
+  .mono{font-family:"IBM Plex Mono",ui-monospace,monospace;}
+
+  .authbar{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:16px;
+    font-family:"IBM Plex Mono",monospace;font-size:.72rem;color:var(--soft);}
+  .authbar b{color:var(--olive);font-weight:600;}
+  .authbar[hidden]{display:none;}
+
+  header{margin-bottom:22px;}
+  .kicker{font-family:"IBM Plex Mono",monospace;font-size:.68rem;letter-spacing:.2em;
+    text-transform:uppercase;color:var(--soft);margin-bottom:8px;}
+  h1{font-family:"Barlow Condensed",sans-serif;font-weight:700;text-transform:uppercase;
+    font-size:2.4rem;line-height:.95;margin:0 0 14px;letter-spacing:.005em;}
+  .progress-meta{display:flex;justify-content:space-between;align-items:baseline;
+    font-family:"IBM Plex Mono",monospace;font-size:.74rem;color:var(--soft);margin-bottom:7px;}
+  .progress-meta b{color:var(--olive);font-weight:500;}
+  .bar{height:7px;background:var(--band);border-radius:100px;overflow:hidden;}
+  .bar > i{display:block;height:100%;background:var(--olive-2);border-radius:100px;
+    width:0;transition:width .6s cubic-bezier(.2,.7,.2,1);}
+
+  .banner{background:var(--band);border-radius:12px;padding:14px 18px;margin-bottom:16px;
+    font-size:.9rem;display:flex;gap:10px;align-items:flex-start;}
+  .banner.done{background:#DDE7C8;}
+  .banner .ic{font-size:1.1rem;line-height:1.2;}
+  .banner.warn{background:#F3E4DD;color:#7a3520;}
+
+  .next{background:var(--card);border:1px solid var(--line);border-radius:16px;
+    box-shadow:var(--shadow);overflow:hidden;margin-bottom:18px;}
+  .next-head{padding:20px 22px 16px;border-bottom:1px solid var(--line);
+    display:flex;align-items:center;gap:14px;}
+  .letter{width:52px;height:52px;flex:none;border-radius:12px;background:var(--olive);
+    color:#F3F4EF;font-family:"Barlow Condensed",sans-serif;font-weight:700;font-size:1.9rem;
+    display:flex;align-items:center;justify-content:center;}
+  .next-head .t .nm{font-family:"Barlow Condensed",sans-serif;font-weight:700;text-transform:uppercase;
+    font-size:1.5rem;line-height:1;letter-spacing:.01em;}
+  .next-head .t .tag{font-size:.78rem;color:var(--olive-2);font-weight:600;text-transform:uppercase;
+    letter-spacing:.04em;margin-top:3px;}
+  .ex-list{padding:6px 22px 18px;}
+  .ex{padding:11px 0;border-top:1px solid var(--line);}
+  .ex:first-child{border-top:none;}
+  .ex .row{display:flex;justify-content:space-between;gap:12px;align-items:baseline;}
+  .ex .name{font-weight:600;font-size:.95rem;}
+  .ex .dose{font-family:"IBM Plex Mono",monospace;font-size:.78rem;color:var(--olive);white-space:nowrap;}
+  .ex .note{font-size:.8rem;color:var(--soft);margin-top:2px;}
+
+  .log-box{background:var(--card);border:1px solid var(--line);border-radius:16px;
+    box-shadow:var(--shadow);padding:20px 22px;margin-bottom:18px;}
+  .log-box h2,.supp-card h2{font-family:"Barlow Condensed",sans-serif;font-weight:700;text-transform:uppercase;
+    font-size:1.2rem;margin:0 0 4px;letter-spacing:.01em;}
+  .log-box .hint{font-size:.82rem;color:var(--soft);margin:0 0 14px;}
+  .diff-label{font-family:"IBM Plex Mono",monospace;font-size:.68rem;letter-spacing:.1em;
+    text-transform:uppercase;color:var(--soft);display:flex;justify-content:space-between;margin-bottom:8px;}
+  .diff{display:grid;grid-template-columns:repeat(10,1fr);gap:6px;margin-bottom:16px;}
+  .diff button{aspect-ratio:1;border:1px solid var(--line);background:var(--paper);
+    border-radius:9px;font-family:"IBM Plex Mono",monospace;font-size:.85rem;color:var(--ink);
+    cursor:pointer;transition:transform .1s,box-shadow .12s;padding:0;}
+  .diff button:hover{transform:translateY(-1px);}
+  .diff button.sel{color:#fff;border-color:transparent;box-shadow:var(--shadow);font-weight:600;}
+  textarea{width:100%;border:1px solid var(--line);border-radius:10px;background:var(--paper);
+    font-family:"Inter",sans-serif;font-size:.9rem;color:var(--ink);padding:11px 13px;
+    resize:vertical;min-height:56px;margin-bottom:16px;}
+  textarea:focus,.diff button:focus-visible,button:focus-visible,input:focus-visible{outline:2px solid var(--olive-2);outline-offset:2px;}
+  .complete{width:100%;border:none;border-radius:12px;background:var(--olive);color:#F3F4EF;
+    font-family:"Barlow Condensed",sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.05em;
+    font-size:1.2rem;padding:15px;cursor:pointer;transition:background .15s,opacity .15s;}
+  .complete:hover{background:#33421F;}
+  .complete:disabled{opacity:.4;cursor:not-allowed;}
+  .miss{color:var(--flag);font-size:.8rem;margin-top:8px;text-align:center;min-height:1em;}
+
+  /* supplements */
+  .supp-card{background:var(--card);border:1px solid var(--line);border-radius:16px;
+    box-shadow:var(--shadow);padding:20px 22px;margin-bottom:24px;}
+  .supp-card .today{font-family:"IBM Plex Mono",monospace;font-size:.72rem;color:var(--soft);margin:0 0 14px;}
+  .supp-row{display:flex;align-items:center;gap:12px;padding:12px 0;border-top:1px solid var(--line);}
+  .supp-row:first-of-type{border-top:none;}
+  .supp-row .lab{font-weight:600;font-size:.95rem;flex:none;width:82px;}
+  .creatine-toggle{flex:1;border:1px solid var(--line);background:var(--paper);border-radius:10px;
+    padding:12px 14px;font-family:"Inter",sans-serif;font-size:.9rem;font-weight:600;color:var(--soft);
+    cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:all .15s;}
+  .creatine-toggle.on{background:var(--olive-2);border-color:transparent;color:#fff;}
+  .protein-input{flex:1;display:flex;gap:8px;}
+  .protein-input input{flex:1;min-width:0;border:1px solid var(--line);border-radius:10px;background:var(--paper);
+    font-family:"Inter",sans-serif;font-size:.9rem;padding:12px 13px;color:var(--ink);}
+  .protein-input button{border:none;background:var(--olive);color:#F3F4EF;border-radius:10px;
+    font-family:"Barlow Condensed",sans-serif;font-weight:600;text-transform:uppercase;letter-spacing:.03em;
+    font-size:.95rem;padding:0 18px;cursor:pointer;flex:none;}
+  .supp-strip{display:flex;gap:5px;margin-top:16px;}
+  .supp-day{flex:1;text-align:center;}
+  .supp-day .dot{height:38px;border-radius:8px;background:var(--band);display:flex;flex-direction:column;
+    align-items:center;justify-content:center;gap:1px;margin-bottom:4px;padding:2px;}
+  .supp-day .dot.hit{background:#DDE7C8;}
+  .supp-day .dot .c{font-family:"IBM Plex Mono",monospace;font-size:.6rem;color:var(--olive);font-weight:600;}
+  .supp-day .dot .p{font-family:"IBM Plex Mono",monospace;font-size:.6rem;color:var(--ink);}
+  .supp-day .lbl{font-family:"IBM Plex Mono",monospace;font-size:.58rem;color:var(--soft);}
+
+  /* partner card */
+  .partner-card[hidden]{display:none;}
+  .partner-card .p-top{display:flex;align-items:center;gap:12px;}
+  .partner-card .p-badge{width:40px;height:40px;flex:none;border-radius:10px;background:var(--olive-2);
+    color:#fff;font-family:"Barlow Condensed",sans-serif;font-weight:700;font-size:1.3rem;
+    display:flex;align-items:center;justify-content:center;}
+  .partner-card .p-name{font-family:"Barlow Condensed",sans-serif;font-weight:700;font-size:1.15rem;text-transform:uppercase;}
+  .partner-card .p-sub{font-family:"IBM Plex Mono",monospace;font-size:.72rem;color:var(--soft);}
+  .p-bar{height:6px;background:var(--band);border-radius:100px;overflow:hidden;margin:14px 0 6px;}
+  .p-bar>i{display:block;height:100%;background:var(--olive-2);border-radius:100px;width:0;}
+  .p-last{font-family:"IBM Plex Mono",monospace;font-size:.72rem;color:var(--soft);}
+  .partner-empty{color:var(--soft);font-size:.9rem;}
+
+  .hist-head{display:flex;justify-content:space-between;align-items:baseline;margin:26px 0 12px;}
+  .hist-head h2{font-family:"Barlow Condensed",sans-serif;font-weight:700;text-transform:uppercase;
+    font-size:1.3rem;margin:0;letter-spacing:.01em;}
+  .actions{display:flex;gap:8px;}
+  .mini{font-family:"IBM Plex Mono",monospace;font-size:.7rem;letter-spacing:.03em;
+    background:none;border:1px solid var(--line);border-radius:100px;padding:6px 12px;
+    color:var(--ink);cursor:pointer;transition:background .12s,color .12s;}
+  .mini:hover{background:var(--ink);color:var(--paper);}
+  .mini.danger:hover{background:var(--flag);border-color:var(--flag);color:#fff;}
+  .hist{display:flex;flex-direction:column;gap:8px;}
+  .empty{color:var(--soft);font-size:.9rem;padding:18px 0;text-align:center;
+    border:1px dashed var(--line);border-radius:12px;}
+  .entry{background:var(--card);border:1px solid var(--line);border-radius:11px;
+    padding:12px 16px;display:flex;align-items:center;gap:14px;box-shadow:var(--shadow);}
+  .entry .badge{width:34px;height:34px;flex:none;border-radius:9px;background:var(--band);
+    font-family:"Barlow Condensed",sans-serif;font-weight:700;font-size:1.1rem;color:var(--olive);
+    display:flex;align-items:center;justify-content:center;}
+  .entry .info{flex:1;min-width:0;}
+  .entry .info .l1{font-weight:600;font-size:.9rem;}
+  .entry .info .l2{font-family:"IBM Plex Mono",monospace;font-size:.72rem;color:var(--soft);
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .entry .d{font-family:"IBM Plex Mono",monospace;font-size:.72rem;color:#fff;font-weight:600;
+    padding:4px 9px;border-radius:100px;flex:none;}
+
+  .copy-panel{margin-top:14px;background:var(--band);border-radius:12px;padding:14px 16px;display:none;}
+  .copy-panel.show{display:block;}
+  .copy-panel .cmsg{font-size:.8rem;color:var(--soft);margin-bottom:8px;}
+  .copy-panel textarea{background:#fff;min-height:150px;margin-bottom:0;font-family:"IBM Plex Mono",monospace;font-size:.76rem;}
+
+  footer{margin-top:30px;font-family:"IBM Plex Mono",monospace;font-size:.7rem;color:var(--soft);text-align:center;}
+
+  /* auth overlay */
+  .auth-overlay{position:fixed;inset:0;background:var(--paper);display:flex;align-items:center;
+    justify-content:center;padding:24px;z-index:50;}
+  .auth-overlay[hidden]{display:none;}
+  .auth-card{background:var(--card);border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);
+    padding:28px 26px;max-width:400px;width:100%;}
+  .auth-card .kicker{margin-bottom:6px;}
+  .auth-card h2{font-family:"Barlow Condensed",sans-serif;font-weight:700;text-transform:uppercase;
+    font-size:1.9rem;margin:.1em 0 .4em;letter-spacing:.01em;}
+  .auth-card .auth-msg{font-size:.9rem;color:var(--soft);margin:0 0 16px;}
+  .auth-card input{width:100%;border:1px solid var(--line);border-radius:10px;background:var(--paper);
+    font-family:"Inter",sans-serif;font-size:1rem;padding:13px 14px;color:var(--ink);margin-bottom:12px;}
+  .auth-card button{width:100%;border:none;border-radius:12px;background:var(--olive);color:#F3F4EF;
+    font-family:"Barlow Condensed",sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.05em;
+    font-size:1.1rem;padding:14px;cursor:pointer;transition:background .15s,opacity .15s;}
+  .auth-card button:hover{background:#33421F;}
+  .auth-card button:disabled{opacity:.5;cursor:not-allowed;}
+  .auth-note{font-size:.82rem;margin-top:12px;min-height:1em;line-height:1.4;}
+  .auth-note.ok{color:var(--olive-2);}
+  .auth-note.err{color:var(--flag);}
+
+  .fade-in{animation:fade .4s ease both;}
+  @keyframes fade{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:none;}}
+  @media(prefers-reduced-motion:reduce){.fade-in{animation:none;}.bar>i{transition:none;}}
+  @media(max-width:420px){.diff{gap:4px;}.diff button{font-size:.75rem;}h1{font-size:2rem;}.supp-row .lab{width:70px;}}
+</style>
+</head>
+<body>
+
+<!-- Sign-in overlay (shown when signed out) -->
+<div class="auth-overlay" id="auth-overlay" hidden>
+  <div class="auth-card">
+    <div class="kicker">Murph · Phase 1 Tracker</div>
+    <h2 id="auth-title">Sign in</h2>
+    <p class="auth-msg" id="auth-msg">Sign in with your Google account to sync your workouts. No password needed.</p>
+    <button id="auth-send">Continue with Google</button>
+    <div class="auth-note" id="auth-note"></div>
+  </div>
+</div>
+
+<div class="wrap">
+  <div class="authbar" id="authbar" hidden>
+    <span>Signed in as <b id="who"></b></span>
+    <button class="mini" id="signout">Sign out</button>
+  </div>
+
+  <header>
+    <div class="kicker">Murph · Phase 1 Tracker</div>
+    <h1 id="title">Loading…</h1>
+    <div class="progress-meta"><span id="prog-left">—</span><span id="prog-right"></span></div>
+    <div class="bar"><i id="bar"></i></div>
+  </header>
+
+  <div id="banner-slot"></div>
+
+  <div class="next" id="next-card"></div>
+
+  <div class="log-box">
+    <h2>Log this session</h2>
+    <p class="hint">Tap how hard it felt, add a note if anything's worth flagging, then mark it done.</p>
+    <div class="diff-label"><span>Easy</span><span>Difficulty</span><span>Brutal</span></div>
+    <div class="diff" id="diff"></div>
+    <textarea id="notes" placeholder="Optional — e.g. 'left knee twinged on lunges' or 'runs felt easier'"></textarea>
+    <button class="complete" id="complete" disabled>Mark complete</button>
+    <div class="miss" id="miss"></div>
+  </div>
+
+  <div class="supp-card">
+    <h2>Daily supplements</h2>
+    <p class="today" id="supp-today">Today</p>
+    <div class="supp-row">
+      <span class="lab">Creatine</span>
+      <button class="creatine-toggle" id="creatine-btn">Tap when taken (5g)</button>
+    </div>
+    <div class="supp-row">
+      <span class="lab">Protein</span>
+      <div class="protein-input">
+        <input type="number" id="protein-in" inputmode="numeric" placeholder="grams today" min="0" max="400">
+        <button id="protein-save">Save</button>
+      </div>
+    </div>
+    <div class="supp-strip" id="supp-strip"></div>
+  </div>
+
+  <div class="supp-card partner-card" id="partner-card" hidden>
+    <h2>Partner progress</h2>
+    <div id="partner-body"></div>
+  </div>
+
+  <div class="hist-head">
+    <h2>Workout history</h2>
+    <div class="actions">
+      <button class="mini" id="copy">Copy log</button>
+      <button class="mini" id="undo">Undo last</button>
+      <button class="mini danger" id="reset">Reset</button>
+    </div>
+  </div>
+  <div class="hist" id="hist"></div>
+
+  <div class="copy-panel" id="copy-panel">
+    <div class="cmsg" id="cmsg"></div>
+    <textarea id="copy-text" readonly></textarea>
+  </div>
+
+  <footer>Your progress syncs to your account.</footer>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult,
+         onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { initializeFirestore, getFirestore, persistentLocalCache, doc, getDoc, setDoc,
+         collection, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+// ---- Firebase config (public identifiers, safe to ship) ----
+const firebaseConfig = {
+  apiKey: "AIzaSyDBnuhes0kYuy2zfe8oojK9WSxg_PORqEY",
+  authDomain: "murph-tracker-c94db.firebaseapp.com",
+  projectId: "murph-tracker-c94db",
+  storageBucket: "murph-tracker-c94db.firebasestorage.app",
+  messagingSenderId: "287760042875",
+  appId: "1:287760042875:web:db445367dda2c1a5a10bde"
+};
+
+// ---- Who's allowed in, and their display names ----
+const HUSBAND_EMAIL = "luke.f.byrnes@gmail.com";
+const CAROLINE_EMAIL = "carolinebyrnes25@gmail.com";
+const ALLOWLIST = [CAROLINE_EMAIL, HUSBAND_EMAIL];
+const NAMES = { [CAROLINE_EMAIL]:"Caroline", [HUSBAND_EMAIL]:"Luke" };
+
+const fbApp = initializeApp(firebaseConfig);
+const auth = getAuth(fbApp);
+let db;
+try{ db = initializeFirestore(fbApp, { localCache: persistentLocalCache({}) }); }
+catch(e){ db = getFirestore(fbApp); }
+
+// ---- Plan data ----
+const PHASE1 = {
+  A:{nm:"Pull + Run base",tag:"Pulling pattern · easy running",ex:[
+    {name:"Dead hang",dose:"3 × 15–20s"},
+    {name:"Inverted row (barbell/TRX)",dose:"3 × 8–10",note:"More upright = easier · more horizontal = harder"},
+    {name:"Lat pulldown or assisted pull-up",dose:"3 × 8–10"},
+    {name:"Incline push-ups",dose:"3 × 8–12"},
+    {name:"Run / walk",dose:"15 min",note:"Jog 1 min / walk 2 min"}]},
+  B:{nm:"Squat + Intervals",tag:"Legs · interval running",ex:[
+    {name:"Goblet squat",dose:"3 × 10"},
+    {name:"Bodyweight squats",dose:"3 × 15",note:"Hip crease below the knee"},
+    {name:"Walking lunges",dose:"2 × 10 / leg"},
+    {name:"DB Romanian deadlift",dose:"2 × 10"},
+    {name:"Run / walk intervals",dose:"12–15 min",note:"Jog 1 min / walk 1–2 min"},
+    {name:"Plank",dose:"3 × 20–30s"}]},
+  C:{nm:"Push + Pull",tag:"Pressing · more pulling volume",ex:[
+    {name:"DB bench press (or incline push-ups)",dose:"3 × 8–10"},
+    {name:"Band-assisted pull-ups",dose:"3 × 5–8",note:"A band that lets you do clean reps"},
+    {name:"Inverted row (barbell/TRX)",dose:"3 × 10"},
+    {name:"Incline / knee push-ups",dose:"3 × clean",note:"Leave 2 in the tank"},
+    {name:"Overhead DB press",dose:"2 × 10"}]},
+  D:{nm:"Mixed conditioning",tag:"A first taste of Murph",ex:[
+    {name:"Easy jog",dose:"5 min"},
+    {name:"Circuit — unhurried",dose:"5 rounds",note:"2 assisted pull-ups · 5 incline push-ups · 10 squats"},
+    {name:"Continuous jog",dose:"0.5 → 0.75 mi",note:"Walk when needed; nudge the distance up"}]}
+};
+const ORDER=["A","B","C","D"];
+const PHASE1_SESSIONS=16;
+const CREATINE_G=5;
+const CACHE_KEY="murph:cache";      // local mirror, keyed per-uid below
+const LEGACY_KEY="murph:state";     // pre-cloud single-user data to migrate
+
+let state={completed:[],supps:{}};
+let picked=null;
+let user=null;
+let userRef=null;
+let unsubUsers=null;
+let ready=false;
+
+const $=id=>document.getElementById(id);
+function diffColor(n){
+  if(n<=3)return"#6E8B3E"; if(n<=5)return"#8a9a3a";
+  if(n<=7)return"#C97A2C"; return"#BF4A2B";
+}
+function iso(d){return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");}
+function todayKey(){return iso(new Date());}
+function fmtDate(isoStr){
+  let d;
+  if(/^\d{4}-\d{2}-\d{2}$/.test(isoStr)){const p=isoStr.split("-");d=new Date(+p[0],+p[1]-1,+p[2]);}
+  else{d=new Date(isoStr);}
+  return d.toLocaleDateString(undefined,{month:"short",day:"numeric"});
+}
+function shortMD(key){const p=key.split("-");return parseInt(p[1])+"/"+parseInt(p[2]);}
+function nameFor(email){ return NAMES[email] || (email? email.split("@")[0] : "Athlete"); }
+
+// Session #1 (Jul 13, 2026), logged in chat before the tracker existed — his baseline.
+function seedState(){
+  return {
+    completed:[{
+      session:1, day:"A", date:"2026-07-13T12:00:00.000Z", difficulty:7,
+      notes:"8 reps each; lat pulldown 100 lb; came in sore from prior-day cardio (mile run, incline walking, 500m row @ 2:10)."
+    }],
+    supps:{ "2026-07-13":{ creatine:5, protein:48 } }
+  };
+}
+
+/* ---------------- Auth ---------------- */
+const overlay=$("auth-overlay");
+function showOverlay(msg,isErr){
+  overlay.hidden=false; $("authbar").hidden=true;
+  if(msg){ $("auth-note").textContent=msg; $("auth-note").className="auth-note "+(isErr?"err":"ok"); }
+}
+function hideOverlay(){ overlay.hidden=true; }
+
+const provider=new GoogleAuthProvider();
+provider.setCustomParameters({ prompt:"select_account" });
+
+$("auth-send").onclick=async()=>{
+  const btn=$("auth-send"); btn.disabled=true; btn.textContent="Opening Google…";
+  $("auth-note").textContent="";
+  try{
+    await signInWithPopup(auth, provider); // onAuthStateChanged takes over on success
+  }catch(e){
+    if(e.code==="auth/popup-blocked" || e.code==="auth/operation-not-supported-in-this-environment"
+       || e.code==="auth/cancelled-popup-request"){
+      // Popups are often blocked in home-screen/mobile webviews — fall back to full-page redirect.
+      try{ await signInWithRedirect(auth, provider); return; }
+      catch(e2){ $("auth-note").textContent="Sign-in failed: "+(e2.code||e2.message); $("auth-note").className="auth-note err"; }
+    }else if(e.code==="auth/popup-closed-by-user"){
+      $("auth-note").textContent="";
+    }else{
+      $("auth-note").textContent="Sign-in failed: "+(e.code||e.message); $("auth-note").className="auth-note err";
+    }
+  }finally{ btn.disabled=false; btn.textContent="Continue with Google"; }
+};
+
+$("signout").onclick=async()=>{ await signOut(auth); };
+
+async function handleRedirectResult(){
+  // Surfaces errors from the redirect flow; success is handled by onAuthStateChanged.
+  try{ await getRedirectResult(auth); }
+  catch(e){ if(e && e.code) showOverlay("Sign-in failed: "+e.code, true); }
+}
+
+onAuthStateChanged(auth, async (u)=>{
+  if(u){
+    const email=(u.email||"").toLowerCase();
+    if(!ALLOWLIST.includes(email)){
+      await signOut(auth);
+      showOverlay("This tracker is limited to approved accounts. Ask Caroline to add you.", true);
+      return;
+    }
+    user=u; hideOverlay();
+    $("authbar").hidden=false; $("who").textContent=nameFor(email);
+    if(unsubUsers) unsubUsers();
+    unsubUsers=onSnapshot(collection(db,"users"), (qs)=>{
+      let partner=null;
+      qs.forEach(d=>{ if(d.id!==user.uid) partner=d.data(); });
+      renderPartner(partner);
+    }, ()=>{});
+    await initUserData(email);
+  } else {
+    user=null; userRef=null;
+    if(unsubUsers){ unsubUsers(); unsubUsers=null; }
+    showOverlay();
+  }
+});
+
+async function initUserData(email){
+  userRef=doc(db,"users",user.uid);
+  let snap=null;
+  try{ snap=await getDoc(userRef); }catch(e){}
+  if(snap && snap.exists() && Array.isArray(snap.data().completed)){
+    const d=snap.data();
+    state={completed:d.completed||[], supps:d.supps||{}, plan:d.plan||"murph-phase1"};
+  }else{
+    // New profile. Only the husband inherits the pre-cloud Session #1 backfill /
+    // any log already stored on his device; everyone else starts clean.
+    if(email===HUSBAND_EMAIL){
+      let legacy=null;
+      try{ const raw=localStorage.getItem(LEGACY_KEY); if(raw) legacy=JSON.parse(raw); }catch(e){}
+      state=(legacy && Array.isArray(legacy.completed) && legacy.completed.length)
+        ? {completed:legacy.completed, supps:legacy.supps||{}, plan:"murph-phase1"}
+        : {...seedState(), plan:"murph-phase1"};
+    }else{
+      state={completed:[], supps:{}, plan:"murph-phase1"};
+    }
+    await save();
+  }
+  ready=true;
+  render();
+}
+
+/* ---------------- Persistence ---------------- */
+async function save(){
+  try{ localStorage.setItem(CACHE_KEY+":"+(user?user.uid:"anon"), JSON.stringify(state)); }catch(e){}
+  if(userRef && user){
+    try{
+      await setDoc(userRef, {
+        email:user.email, name:nameFor((user.email||"").toLowerCase()),
+        plan:state.plan||"murph-phase1",
+        completed:state.completed, supps:state.supps, updatedAt:Date.now()
+      }, {merge:true});
+    }catch(e){ console.warn("cloud save failed (will retry when online):", e); }
+  }
+}
+
+/* ---------------- Rendering ---------------- */
+function buildDiff(){
+  const wrap=$("diff"); wrap.innerHTML="";
+  for(let i=1;i<=10;i++){
+    const b=document.createElement("button");
+    b.textContent=i; b.dataset.v=i;
+    b.onclick=()=>{
+      picked=i;
+      [...wrap.children].forEach(c=>{c.classList.remove("sel");c.style.background="";c.style.borderColor="";});
+      b.classList.add("sel"); b.style.background=diffColor(i);
+      $("complete").disabled=false; $("miss").textContent="";
+    };
+    wrap.appendChild(b);
+  }
+}
+
+function renderBanner(){
+  const slot=$("banner-slot"); slot.innerHTML="";
+  if(state.completed.length>=PHASE1_SESSIONS){
+    slot.innerHTML+='<div class="banner done"><span class="ic">🏁</span><span><b>Phase 1 complete — nice work.</b> You can keep logging here in the meantime.</span></div>';
+  }
+}
+
+function renderNext(){
+  const done=state.completed.length;
+  const day=ORDER[done%4];
+  const w=PHASE1[day];
+  let rows=w.ex.map(e=>'<div class="ex"><div class="row"><span class="name">'+e.name+'</span><span class="dose">'+e.dose+'</span></div>'+(e.note?'<div class="note">'+e.note+'</div>':'')+'</div>').join("");
+  $("next-card").className="next fade-in";
+  $("next-card").innerHTML='<div class="next-head"><div class="letter">'+day+'</div><div class="t"><div class="nm">'+w.nm+'</div><div class="tag">'+w.tag+'</div></div></div><div class="ex-list">'+rows+'</div>';
+}
+
+function renderProgress(){
+  const done=state.completed.length;
+  const session=Math.min(done+1,PHASE1_SESSIONS);
+  const week=Math.min(Math.floor(done/4)+1,4);
+  const day=ORDER[done%4];
+  $("title").textContent=done>=PHASE1_SESSIONS?"Phase 1 done":"Next up · Day "+day;
+  $("prog-left").innerHTML="Session <b>"+session+"</b> of "+PHASE1_SESSIONS+" · Week <b>"+week+"</b>";
+  $("prog-right").textContent=Math.round(Math.min(done,PHASE1_SESSIONS)/PHASE1_SESSIONS*100)+"%";
+  setTimeout(()=>{$("bar").style.width=Math.min(done,PHASE1_SESSIONS)/PHASE1_SESSIONS*100+"%";},50);
+}
+
+function renderHist(){
+  const h=$("hist");
+  if(!state.completed.length){h.innerHTML='<div class="empty">No sessions logged yet — your first one starts the streak.</div>';return;}
+  h.innerHTML=[...state.completed].reverse().map(c=>'<div class="entry"><div class="badge">'+c.day+'</div><div class="info"><div class="l1">#'+c.session+' · '+PHASE1[c.day].nm+'</div><div class="l2">'+fmtDate(c.date)+(c.notes?' · '+c.notes.replace(/</g,"&lt;"):'')+'</div></div><div class="d" style="background:'+diffColor(c.difficulty)+'">'+c.difficulty+'/10</div></div>').join("");
+}
+
+function renderSupps(){
+  const tk=todayKey();
+  const t=state.supps[tk]||{};
+  $("supp-today").textContent="Today · "+fmtDate(tk);
+  const btn=$("creatine-btn");
+  if(t.creatine){btn.classList.add("on");btn.textContent="✓ Taken ("+t.creatine+"g)";}
+  else{btn.classList.remove("on");btn.textContent="Tap when taken (5g)";}
+  const pin=$("protein-in");
+  if(document.activeElement!==pin)pin.value=t.protein!=null?t.protein:"";
+  const strip=$("supp-strip");const cells=[];const now=new Date();
+  for(let i=6;i>=0;i--){const d=new Date(now);d.setDate(now.getDate()-i);const k=iso(d);const s=state.supps[k]||{};
+    const hit=s.creatine||s.protein!=null;
+    cells.push('<div class="supp-day"><div class="dot'+(hit?' hit':'')+'"><span class="c">'+(s.creatine?'C✓':'·')+'</span><span class="p">'+(s.protein!=null?s.protein+'g':'')+'</span></div><div class="lbl">'+shortMD(k)+'</div></div>');
+  }
+  strip.innerHTML=cells.join("");
+}
+
+function renderPartner(p){
+  const card=$("partner-card"); const body=$("partner-body");
+  if(!p){ card.hidden=true; return; }
+  card.hidden=false;
+  const done=(p.completed||[]).length;
+  const pct=Math.round(Math.min(done,PHASE1_SESSIONS)/PHASE1_SESSIONS*100);
+  const name=p.name||nameFor((p.email||"").toLowerCase());
+  const initial=(name||"?").charAt(0).toUpperCase();
+  let last="No sessions logged yet.";
+  if(done){
+    const c=p.completed[p.completed.length-1];
+    last="Last · Day "+c.day+" — "+fmtDate(c.date)+" — "+c.difficulty+"/10";
+  }
+  body.innerHTML=
+    '<div class="p-top"><div class="p-badge">'+initial+'</div><div>'+
+      '<div class="p-name">'+name+'</div>'+
+      '<div class="p-sub">Session '+Math.min(done+1,PHASE1_SESSIONS)+' of '+PHASE1_SESSIONS+' · '+pct+'%</div>'+
+    '</div></div>'+
+    '<div class="p-bar"><i style="width:'+pct+'%"></i></div>'+
+    '<div class="p-last">'+last+'</div>';
+}
+
+function render(){
+  if(!ready) return;
+  renderProgress();renderNext();renderHist();renderSupps();renderBanner();
+}
+
+function cleanupDay(k){const s=state.supps[k];if(s&&!s.creatine&&s.protein==null)delete state.supps[k];}
+function resetInputs(){
+  picked=null;
+  [...$("diff").children].forEach(c=>{c.classList.remove("sel");c.style.background="";});
+  $("notes").value="";
+  $("complete").disabled=true;
+}
+
+/* ---------------- Handlers ---------------- */
+$("complete").onclick=async()=>{
+  if(!picked){$("miss").textContent="Pick a difficulty first.";return;}
+  const done=state.completed.length;
+  state.completed.push({session:done+1,day:ORDER[done%4],date:new Date().toISOString(),difficulty:picked,notes:$("notes").value.trim()});
+  resetInputs(); render(); await save();
+  window.scrollTo({top:0,behavior:"smooth"});
+};
+$("creatine-btn").onclick=async()=>{
+  const tk=todayKey(); state.supps[tk]=state.supps[tk]||{};
+  if(state.supps[tk].creatine){delete state.supps[tk].creatine;}
+  else{state.supps[tk].creatine=CREATINE_G;}
+  cleanupDay(tk); renderSupps(); await save();
+};
+$("protein-save").onclick=async()=>{
+  const tk=todayKey(); const v=parseInt($("protein-in").value,10);
+  state.supps[tk]=state.supps[tk]||{};
+  if(!isNaN(v)&&v>0){state.supps[tk].protein=v;}else{delete state.supps[tk].protein;}
+  cleanupDay(tk); renderSupps(); await save();
+  $("protein-in").blur();
+};
+$("undo").onclick=async()=>{if(!state.completed.length)return;state.completed.pop();render();await save();};
+$("reset").onclick=async()=>{
+  if(!confirm("Clear your entire log (workouts + supplements)? This can't be undone."))return;
+  state={completed:[],supps:{},plan:"murph-phase1"};resetInputs();render();$("copy-panel").classList.remove("show");await save();
+};
+$("copy").onclick=async()=>{
+  let txt="Murph Phase 1 — "+nameFor((user&&user.email||"").toLowerCase())+"'s session log:\n";
+  if(state.completed.length){
+    state.completed.forEach(c=>{txt+="#"+c.session+" Day "+c.day+" ("+PHASE1[c.day].nm+") — "+fmtDate(c.date)+" — difficulty "+c.difficulty+"/10"+(c.notes?" — "+c.notes:"")+"\n";});
+  }else{txt+="(none yet)\n";}
+  const days=Object.keys(state.supps).sort();
+  if(days.length){
+    txt+="\nSupplements:\n";
+    days.forEach(k=>{const s=state.supps[k];txt+=fmtDate(k)+" — creatine "+(s.creatine?s.creatine+"g":"—")+" — protein "+(s.protein!=null?s.protein+"g":"—")+"\n";});
+  }
+  $("copy-text").value=txt; $("copy-panel").classList.add("show");
+  try{await navigator.clipboard.writeText(txt);$("cmsg").textContent="Copied to clipboard.";}
+  catch(e){$("cmsg").textContent="Select the text below and copy it.";$("copy-text").focus();$("copy-text").select();}
+};
+
+/* ---------------- Boot ---------------- */
+buildDiff();
+await handleRedirectResult();
+// onAuthStateChanged drives the rest; show overlay immediately if clearly signed out
+if(!auth.currentUser) showOverlay();
+</script>
+</body>
+</html>
