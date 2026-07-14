@@ -112,6 +112,9 @@
   .supp-day .dot .c{font-family:"IBM Plex Mono",monospace;font-size:.6rem;color:var(--olive);font-weight:600;}
   .supp-day .dot .p{font-family:"IBM Plex Mono",monospace;font-size:.6rem;color:var(--ink);}
   .supp-day .lbl{font-family:"IBM Plex Mono",monospace;font-size:.58rem;color:var(--soft);}
+  .supp-caption{font-family:"IBM Plex Mono",monospace;font-size:.72rem;color:var(--soft);margin:-2px 0 2px;}
+  .supp-caption b{color:var(--olive);font-weight:600;}
+  .supp-caption.hit b{color:var(--olive-2);}
 
   /* partner card */
   .partner-card[hidden]{display:none;}
@@ -238,6 +241,14 @@
         <button id="protein-save">Save</button>
       </div>
     </div>
+    <div class="supp-caption" id="protein-caption"></div>
+    <div class="supp-row">
+      <span class="lab">Bodyweight</span>
+      <div class="protein-input">
+        <input type="number" id="bw-in" inputmode="numeric" placeholder="lb" min="50" max="600">
+        <button id="bw-save">Save</button>
+      </div>
+    </div>
     <div class="supp-strip" id="supp-strip"></div>
   </div>
 
@@ -347,6 +358,10 @@ function fmtDate(isoStr){
 }
 function shortMD(key){const p=key.split("-");return parseInt(p[1])+"/"+parseInt(p[2]);}
 function nameFor(email){ return NAMES[email] || (email? email.split("@")[0] : "Athlete"); }
+// Protein target derived from bodyweight (lb): plan calls for 0.7–1.0 g/lb.
+// "Everyday" target ≈ 0.8 g/lb; range spans 0.7–1.0.
+function proteinGoal(){ return state.bodyweight>0 ? Math.round(state.bodyweight*0.8) : null; }
+function proteinRange(){ return state.bodyweight>0 ? [Math.round(state.bodyweight*0.7), Math.round(state.bodyweight)] : null; }
 
 // Session #1 (Jul 13, 2026), logged in chat before the tracker existed — his baseline.
 function seedState(){
@@ -427,7 +442,7 @@ async function initUserData(email){
   try{ snap=await getDoc(userRef); }catch(e){}
   if(snap && snap.exists() && Array.isArray(snap.data().completed)){
     const d=snap.data();
-    state={completed:d.completed||[], supps:d.supps||{}, plan:d.plan||"murph-phase1"};
+    state={completed:d.completed||[], supps:d.supps||{}, plan:d.plan||"murph-phase1", bodyweight:d.bodyweight||null};
   }else{
     // New profile. Only the husband inherits the pre-cloud Session #1 backfill /
     // any log already stored on his device; everyone else starts clean.
@@ -453,7 +468,7 @@ async function save(){
     try{
       await setDoc(userRef, {
         email:user.email, name:nameFor((user.email||"").toLowerCase()),
-        plan:state.plan||"murph-phase1",
+        plan:state.plan||"murph-phase1", bodyweight:state.bodyweight||null,
         completed:state.completed, supps:state.supps, updatedAt:Date.now()
       }, {merge:true});
     }catch(e){ console.warn("cloud save failed (will retry when online):", e); }
@@ -518,10 +533,25 @@ function renderSupps(){
   else{btn.classList.remove("on");btn.textContent="Tap when taken (5g)";}
   const pin=$("protein-in");
   if(document.activeElement!==pin)pin.value=t.protein!=null?t.protein:"";
+  const bw=$("bw-in");
+  if(document.activeElement!==bw)bw.value=state.bodyweight>0?state.bodyweight:"";
+  // protein target caption
+  const goal=proteinGoal(); const cap=$("protein-caption"); const todayP=t.protein!=null?t.protein:null;
+  if(goal){
+    const rg=proteinRange();
+    cap.innerHTML=(todayP!=null)
+      ? "Today <b>"+todayP+" / "+goal+" g</b> · aim "+rg[0]+"–"+rg[1]+" g/day"
+      : "Target ~<b>"+goal+" g</b>/day · range "+rg[0]+"–"+rg[1]+" g (0.7–1.0 g/lb)";
+    cap.className="supp-caption"+(todayP!=null&&todayP>=goal?" hit":"");
+  }else{
+    cap.innerHTML="Set your bodyweight to get a daily protein target.";
+    cap.className="supp-caption";
+  }
   const strip=$("supp-strip");const cells=[];const now=new Date();
   for(let i=6;i>=0;i--){const d=new Date(now);d.setDate(now.getDate()-i);const k=iso(d);const s=state.supps[k]||{};
     const hit=s.creatine||s.protein!=null;
-    cells.push('<div class="supp-day"><div class="dot'+(hit?' hit':'')+'"><span class="c">'+(s.creatine?'C✓':'·')+'</span><span class="p">'+(s.protein!=null?s.protein+'g':'')+'</span></div><div class="lbl">'+shortMD(k)+'</div></div>');
+    const pMet=goal&&s.protein!=null&&s.protein>=goal;
+    cells.push('<div class="supp-day"><div class="dot'+(hit?' hit':'')+'"><span class="c">'+(s.creatine?'C✓':'·')+'</span><span class="p"'+(pMet?' style="color:var(--olive-2);font-weight:600"':'')+'>'+(s.protein!=null?s.protein+'g':'')+'</span></div><div class="lbl">'+shortMD(k)+'</div></div>');
   }
   strip.innerHTML=cells.join("");
 }
@@ -582,13 +612,20 @@ $("protein-save").onclick=async()=>{
   cleanupDay(tk); renderSupps(); await save();
   $("protein-in").blur();
 };
+$("bw-save").onclick=async()=>{
+  const v=parseInt($("bw-in").value,10);
+  state.bodyweight=(!isNaN(v)&&v>0)?v:null;
+  renderSupps(); await save();
+  $("bw-in").blur();
+};
 $("undo").onclick=async()=>{if(!state.completed.length)return;state.completed.pop();render();await save();};
 $("reset").onclick=async()=>{
   if(!confirm("Clear your entire log (workouts + supplements)? This can't be undone."))return;
-  state={completed:[],supps:{},plan:"murph-phase1"};resetInputs();render();$("copy-panel").classList.remove("show");await save();
+  state={completed:[],supps:{},plan:"murph-phase1",bodyweight:state.bodyweight||null};resetInputs();render();$("copy-panel").classList.remove("show");await save();
 };
 $("copy").onclick=async()=>{
   let txt="Murph Phase 1 — "+nameFor((user&&user.email||"").toLowerCase())+"'s session log:\n";
+  if(state.bodyweight>0){ const rg=proteinRange(); txt+="Bodyweight: "+state.bodyweight+" lb · protein target ~"+proteinGoal()+" g/day (range "+rg[0]+"–"+rg[1]+")\n"; }
   if(state.completed.length){
     state.completed.forEach(c=>{txt+="#"+c.session+" Day "+c.day+" ("+PHASE1[c.day].nm+") — "+fmtDate(c.date)+" — difficulty "+c.difficulty+"/10"+(c.notes?" — "+c.notes:"")+"\n";});
   }else{txt+="(none yet)\n";}
