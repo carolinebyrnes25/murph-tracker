@@ -1,7 +1,7 @@
 import { MURPH_TARGETS } from "./config.js";
-import { $, diffColor, fmtDate, fmtMile, formatMileField, iso, parseMile, shortName, todayKey } from "./util.js";
+import { $, fmtDate, fmtMile, formatMileField, iso, parseMile, shortName, todayKey } from "./util.js";
 import { PHASE1, WEIGHTED_LIFTS } from "./plan.js";
-import { murphDate, renderAll, save, state } from "./store.js";
+import { murphDate, save, state, vestWeight } from "./store.js";
 import { svgBars, svgLine, weekStart, weeklyCounts } from "./charts.js";
 
 export let selectedLift=WEIGHTED_LIFTS[0];
@@ -116,15 +116,17 @@ export function msToggle(id){
 }
 export function renderMilestones(){
   const el=$("milestones"); if(!el) return;
+  const vi=$("vest-inline"); if(vi) vi.textContent=vestWeight();   // vest load follows gender
   el.innerHTML=MS_TIERS.map(tier=>{
     const cards=tier.items.map(m=>{
       const date=msEarned(m), done=!!date, ov=msOverridden(m);
+      const label=m.id==="murphvest" ? "Murph — "+vestWeight()+"-lb vest" : m.label;
       const sub = ov ? (done?'marked by hand':'cleared by hand')
                      : (done&&typeof date==="string" ? fmtDate(date) : m.sub);
       return '<div class="ms-card'+(done?' done':'')+' tap'+(ov?' ov':'')+(m.tgt?' tgt':'')+(m.big?' big':'')+'"'+
         ' role="button" tabindex="0" aria-pressed="'+(done?'true':'false')+'" data-id="'+m.id+'">'+
         '<div class="ms-check">'+(done?'✓':'')+'</div>'+
-        '<div class="ms-body"><div class="ms-label">'+m.icon+' '+m.label+'</div>'+
+        '<div class="ms-body"><div class="ms-label">'+m.icon+' '+label+'</div>'+
         '<div class="ms-sub2">'+sub+'</div></div></div>';
     }).join("");
     const n=tier.items.filter(m=>!!msEarned(m)).length;

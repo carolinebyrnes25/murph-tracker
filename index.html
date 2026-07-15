@@ -4,6 +4,15 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Murph Tracker</title>
+<!-- Home-screen / PWA icon: Murph mark on a faded American flag -->
+<link rel="apple-touch-icon" href="./apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="192x192" href="./icon-192.png">
+<link rel="icon" type="image/png" sizes="512x512" href="./icon-512.png">
+<link rel="manifest" href="./manifest.webmanifest">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Murph">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#0a1633">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
@@ -119,8 +128,19 @@
   <section class="view" id="view-inputs" hidden>
     <h2 class="view-title">Inputs</h2>
     <div class="supp-card">
-      <p class="rem-lead" id="goal-intro" hidden>👋 <b>Welcome.</b> Set your target date, weekly cadence, and weight — the app builds your plan and reminders around them.</p>
-      <h2>Your goal</h2>
+      <p class="rem-lead" id="goal-intro" hidden>👋 <b>Welcome.</b> Tell us about you and your goal — the app builds your plan, coaching, and reminders around them.</p>
+      <h2>You &amp; your goal</h2>
+      <div class="rem-field">
+        <label class="rem-label" for="name-in">Your name</label>
+        <div class="protein-input">
+          <input type="text" id="name-in" maxlength="40" placeholder="what should we call you?" autocomplete="given-name">
+        </div>
+      </div>
+      <div class="rem-field">
+        <label class="rem-label">Gender <span class="rem-hint">(sets your weighted-vest load)</span></label>
+        <div class="rem-days" id="gender-pills"></div>
+        <div class="rem-days-summary" id="vest-hint"></div>
+      </div>
       <div class="rem-field">
         <label class="rem-label" for="murph-date-in">Murph-ready by</label>
         <input type="date" id="murph-date-in">
@@ -194,7 +214,7 @@
 
     <div class="supp-card">
       <h2>Milestones</h2>
-      <p class="ms-sub">The road to Murph: <b>1-mi run · 100 pull-ups · 200 push-ups · 300 squats · 1-mi run</b>, then the 20-lb vest. Each tier is a bigger fraction of those targets. They tick themselves as your workouts and benchmark tests reach the numbers — and you can tap any of them to set it by hand.</p>
+      <p class="ms-sub">The road to Murph: <b>1-mi run · 100 pull-ups · 200 push-ups · 300 squats · 1-mi run</b>, then the <span id="vest-inline">20</span>-lb vest. Each tier is a bigger fraction of those targets. They tick themselves as your workouts and benchmark tests reach the numbers — and you can tap any of them to set it by hand.</p>
       <div id="milestones"></div>
     </div>
 

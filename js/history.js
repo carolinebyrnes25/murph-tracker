@@ -1,6 +1,6 @@
-import { $, diffColor, fmtDate, nameFor } from "./util.js";
+import { $, diffColor, fmtDate } from "./util.js";
 import { PHASE1 } from "./plan.js";
-import { murphDate, normalizeState, proteinGoal, proteinRange, renderAll, save, setState, state, user } from "./store.js";
+import { murphDate, myName, normalizeState, proteinGoal, proteinRange, renderAll, save, setState, state } from "./store.js";
 import { resetInputs } from "./workout.js";
 
 // Expanded view of one logged session: the workout as prescribed that day (with the weight
@@ -48,12 +48,12 @@ $("reset").onclick=async()=>{
   if(!confirm("Clear your entire log (workouts + supplements)? This can't be undone."))return;
   // Clear the log; keep profile/settings (bodyweight, weights, goal inputs, reminder setup).
   setState({completed:[],supps:{},plan:"murph-phase1",bodyweight:state.bodyweight||null,weights:state.weights||{},
-    murphDate:state.murphDate||null,daysPerWeek:state.daysPerWeek||null,reminderPrefs:state.reminderPrefs||null,fcmTokens:state.fcmTokens||[]});
+    name:state.name||null,gender:state.gender||null,murphDate:state.murphDate||null,daysPerWeek:state.daysPerWeek||null,reminderPrefs:state.reminderPrefs||null,fcmTokens:state.fcmTokens||[]});
   normalizeState();
   resetInputs();renderAll();$("copy-panel").classList.remove("show");await save();
 };
 $("copy").onclick=async()=>{
-  let txt="Murph Tracker — "+nameFor((user&&user.email||"").toLowerCase())+"'s session log:\n";
+  let txt="Murph Tracker — "+myName()+"'s session log:\n";
   if(state.bodyweight>0){ const rg=proteinRange(); txt+="Bodyweight: "+state.bodyweight+" lb · protein target ~"+proteinGoal()+" g/day (range "+rg[0]+"–"+rg[1]+")\n"; }
   if(state.completed.length){
     state.completed.forEach(c=>{

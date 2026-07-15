@@ -127,6 +127,7 @@
   .rem-day{flex:1;aspect-ratio:1;max-width:46px;border:1px solid var(--line);background:var(--paper);
     border-radius:9px;font-family:"IBM Plex Mono",monospace;font-size:.85rem;color:var(--soft);cursor:pointer;padding:0;}
   .rem-day.sel{background:var(--olive);color:#fff;border-color:transparent;font-weight:600;}
+  #gender-pills .rem-day{aspect-ratio:auto;max-width:none;padding:11px 0;font-family:"Inter",sans-serif;font-size:.9rem;font-weight:600;}
   .rem-hint{text-transform:none;letter-spacing:0;color:var(--soft);font-weight:400;}
   .rem-days-summary{font-family:"IBM Plex Mono",monospace;font-size:.74rem;color:var(--olive-2);margin-top:9px;}
   /* coach's note */

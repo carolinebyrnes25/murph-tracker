@@ -81,9 +81,13 @@ The Inputs page (`view-inputs`) collects the profile values the app personalizes
   realistic? how many weeks per phase?) and the push sender's rest-day threshold
   (`reminder-sender/send.js`, `u.daysPerWeek`, replacing the old hardcoded 4).
 - `state.bodyweight` — single value (no longer entered daily). Powers `proteinGoal()`.
+- `state.name` — preferred name. `myName()` (chosen name, else `nameFor(email)`) is used by
+  the coach note, copy log, and drawer.
+- `state.gender` — `"m"`/`"f"`. `vestWeight()` returns 20 (m) / 14 (f), used in the Murph
+  milestone label and the milestones intro (`#vest-inline`).
 
-Both new fields persist top-level in the Firestore doc so `send.js` can read them.
-`onboardingIncomplete()` (missing date, days/week, or weight) routes first-time users to
+These fields persist top-level in the Firestore doc so `send.js` can read them.
+`onboardingIncomplete()` (missing name, gender, date, days/week, or weight) routes first-time users to
 the Inputs page on boot. The bodyweight trend chart and `weightLog` were removed.
 
 ## Supplements model

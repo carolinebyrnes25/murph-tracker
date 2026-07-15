@@ -1,17 +1,18 @@
 import { PHASE1_SESSIONS } from "./config.js";
 import { $, diffColor, joinNames, pick, shortName } from "./util.js";
 import { ORDER, PHASE1, weightedForDay } from "./plan.js";
-import { deloadActive, dlWeight, exWeight, renderAll, save, state, updateDeloadAfterSession } from "./store.js";
+import { deloadActive, dlWeight, exWeight, myName, renderAll, save, state, updateDeloadAfterSession } from "./store.js";
 
 export let picked=null;
 export let weightFb={};   // transient per-session weight feedback: exerciseName -> "down"|"good"|"up"
 export function buildCoachHTML(c){
   const dayName = PHASE1[c.day] ? PHASE1[c.day].nm : ("Day "+c.day);
+  const nm=myName().replace(/</g,"&lt;");   // name is rendered via innerHTML below
   const opener = pick([
-    "Nice work — that's another one in the books. 💪",
-    "Great job showing up and getting it done. 🙌",
-    "Logged and done — that consistency is the whole game.",
-    "Strong work today. This is how it gets built, one session at a time. 🔥"
+    "Nice work, "+nm+" — that's another one in the books. 💪",
+    "Great job showing up and getting it done, "+nm+". 🙌",
+    "Logged and done, "+nm+" — that consistency is the whole game.",
+    "Strong work today, "+nm+". This is how it gets built, one session at a time. 🔥"
   ]);
   const d=c.difficulty; let read;
   if(d<=3) read="You rated it <b>"+d+"/10</b> — comfortable, with plenty left in the tank.";

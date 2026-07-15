@@ -1,6 +1,7 @@
 import { DEV } from "./config.js";
 import { auth } from "./firebase.js";
-import { ready, setRenderAll } from "./store.js";
+import { $ } from "./util.js";
+import { myName, ready, setRenderAll, user } from "./store.js";
 import { devInit, handleRedirectResult, initAuth, showOverlay } from "./auth.js";
 import { buildDiff, renderBanner, renderCoachNote, renderNext, renderProgress, renderRecovery, renderWeights } from "./workout.js";
 import { renderSupps } from "./supps.js";
@@ -10,6 +11,7 @@ import { renderInputs, renderReminders } from "./inputs.js";
 
 export function render(){
   if(!ready) return;
+  if(user && !DEV) $("who").textContent=myName();   // reflect the chosen name in the drawer
   renderRecovery();renderProgress();renderNext();renderWeights();renderHist();renderSupps();renderBanner();renderProgressDash();renderInputs();renderReminders();renderCoachNote();
 }
 /* ---------------- Boot ---------------- */

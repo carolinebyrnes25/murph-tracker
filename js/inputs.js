@@ -16,8 +16,15 @@ export function updateDaySummary(){
   else if(sel.length){ el.textContent="On: "+sel.map(i=>DAY_NAMES[i]).join(" · "); }
   else{ el.textContent="No days selected — pick at least one."; }
 }
-/* ---------------- Inputs page: goal (target date · days/week · weight) ---------------- */
+/* ---------------- Inputs page: profile (name · gender) + goal (date · days/week · weight) ---------------- */
 export function dpwSelected(){ const el=$("dpw-pills"); if(!el) return null; const b=el.querySelector(".rem-day.sel"); return b?+b.dataset.d:null; }
+export function genderSelected(){ const el=$("gender-pills"); if(!el) return null; const b=el.querySelector(".rem-day.sel"); return b?b.dataset.g:null; }
+// Reflect the vest load implied by the currently-selected gender (previews before save).
+export function updateVestHint(){
+  const el=$("vest-hint"); if(!el) return;
+  const g=genderSelected();
+  el.textContent = g ? ("Your final Murph uses a "+(g==="f"?14:20)+"-lb vest.") : "";
+}
 // Live pace read-out from whatever is currently in the inputs (saved or not).
 export function updatePaceReadout(){
   const cap=$("pace-readout"); if(!cap) return;
@@ -36,8 +43,18 @@ export function updatePaceReadout(){
 export function renderInputs(){
   const el=$("dpw-pills"); if(!el) return;
   $("goal-intro").hidden = !onboardingIncomplete();
+  const ni=$("name-in"); if(document.activeElement!==ni) ni.value=state.name||"";
   const di=$("murph-date-in"); if(document.activeElement!==di) di.value=state.murphDate||"";
   const wi=$("weight-in"); if(document.activeElement!==wi) wi.value=state.bodyweight>0?state.bodyweight:"";
+  // gender pills
+  const gEl=$("gender-pills");
+  gEl.innerHTML=[["m","Male"],["f","Female"]].map(([g,lbl])=>'<button type="button" class="rem-day'+(state.gender===g?" sel":"")+'" data-g="'+g+'">'+lbl+'</button>').join("");
+  gEl.querySelectorAll(".rem-day").forEach(b=>{ b.onclick=()=>{
+    gEl.querySelectorAll(".rem-day").forEach(x=>x.classList.remove("sel"));
+    b.classList.add("sel"); updateVestHint();
+  }; });
+  updateVestHint();
+  // days-per-week pills
   const sel=state.daysPerWeek;
   el.innerHTML=[1,2,3,4,5,6,7].map(n=>'<button type="button" class="rem-day'+(sel===n?" sel":"")+'" data-d="'+n+'">'+n+'</button>').join("");
   el.querySelectorAll(".rem-day").forEach(b=>{ b.onclick=()=>{
@@ -100,6 +117,8 @@ $("rem-save").onclick=async()=>{
 // Live-preview the pace read-out as the date/weight fields change (pills handle their own).
 $("murph-date-in").oninput=updatePaceReadout;
 $("goal-save").onclick=async()=>{
+  const nm=$("name-in").value.trim(); state.name = nm || null;
+  state.gender = genderSelected();
   const d=$("murph-date-in").value; state.murphDate = /^\d{4}-\d{2}-\d{2}$/.test(d) ? d : null;
   state.daysPerWeek = dpwSelected();
   const w=parseInt($("weight-in").value,10); state.bodyweight = (!isNaN(w)&&w>0) ? w : null;

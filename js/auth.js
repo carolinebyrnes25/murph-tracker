@@ -55,7 +55,7 @@ export function devInit(){
   setUser({email:"dev@local",uid:"dev"}); setUserRef(null);   // userRef null => save() never hits Firestore
   let saved=null;
   try{ const raw=localStorage.getItem(DEV_KEY); if(raw) saved=JSON.parse(raw); }catch(e){}
-  setState(saved || {completed:[],supps:{},plan:"murph-phase1",bodyweight:null,weights:{},murphDate:null,daysPerWeek:null});
+  setState(saved || {completed:[],supps:{},plan:"murph-phase1",bodyweight:null,weights:{},name:null,gender:null,murphDate:null,daysPerWeek:null});
   normalizeState();
   hideOverlay();
   $("who").textContent="🔧 Local test (no cloud)";
@@ -68,7 +68,7 @@ export async function initUserData(email){
   try{ snap=await getDoc(userRef); }catch(e){}
   if(snap && snap.exists() && Array.isArray(snap.data().completed)){
     const d=snap.data();
-    setState({completed:d.completed||[], supps:d.supps||{}, plan:d.plan||"murph-phase1", bodyweight:d.bodyweight||null, weights:d.weights||{}, murphDate:d.murphDate||null, daysPerWeek:d.daysPerWeek||null, fcmTokens:d.fcmTokens||[], reminderPrefs:d.reminderPrefs||null, coachNote:d.coachNote||null, recoveryDue:!!d.recoveryDue, recoveryReason:d.recoveryReason||null, deload:d.deload||{active:false,left:0,cooldown:0}, milestones:d.milestones||{}, benchmarks:d.benchmarks||[]});
+    setState({completed:d.completed||[], supps:d.supps||{}, plan:d.plan||"murph-phase1", bodyweight:d.bodyweight||null, weights:d.weights||{}, name:d.name||null, gender:d.gender||null, murphDate:d.murphDate||null, daysPerWeek:d.daysPerWeek||null, fcmTokens:d.fcmTokens||[], reminderPrefs:d.reminderPrefs||null, coachNote:d.coachNote||null, recoveryDue:!!d.recoveryDue, recoveryReason:d.recoveryReason||null, deload:d.deload||{active:false,left:0,cooldown:0}, milestones:d.milestones||{}, benchmarks:d.benchmarks||[]});
   }else{
     // New profile. Only the husband inherits the pre-cloud Session #1 backfill /
     // any log already stored on his device; everyone else starts clean.
