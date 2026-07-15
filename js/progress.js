@@ -1,7 +1,7 @@
 import { MURPH_TARGETS } from "./config.js";
 import { $, fmtDate, fmtMile, formatMileField, iso, parseMile, shortName, todayKey } from "./util.js";
 import { PHASE1, WEIGHTED_LIFTS } from "./plan.js";
-import { murphDate, save, state, vestWeight } from "./store.js";
+import { murphDate, planPos, save, state, vestWeight } from "./store.js";
 import { svgBars, svgLine, weekStart, weeklyCounts } from "./charts.js";
 
 export let selectedLift=WEIGHTED_LIFTS[0];
@@ -13,7 +13,7 @@ export let selectedLift=WEIGHTED_LIFTS[0];
 export const MS_TIERS=[
   {label:"Foundation",items:[
     {id:"phase1",icon:"🧱",label:"Phase 1 complete",sub:"16 sessions",
-     auto:s=>s.completed.length>=16, autoDate:s=>s.completed[15]&&s.completed[15].date},
+     auto:s=>planPos()>=16, autoDate:s=>(s.completed[15]||s.completed[s.completed.length-1]||{}).date},
     {id:"mile1",icon:"🏃",label:"Run 1 mile",sub:"without stopping",need:{mile:1}}
   ]},
   {label:"One third",items:[
@@ -51,7 +51,7 @@ export const MS_TIERS=[
 // --- renderers ---
 export function renderCountdownPhase(){
   if(!$("murph-countdown")) return;
-  const done=state.completed.length, p1=Math.min(done,16), pct=Math.round(p1/16*100);
+  const done=planPos(), p1=Math.min(done,16), pct=Math.round(p1/16*100);
   const md=murphDate();
   if(md){
     const days=Math.max(0,Math.ceil((md-new Date())/86400000));

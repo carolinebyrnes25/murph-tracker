@@ -1,7 +1,7 @@
 import { PHASE1_SESSIONS } from "./config.js";
 import { $, diffColor, fmtDate, iso, joinNames, pick, shortName } from "./util.js";
 import { ORDER, PHASE1, weightedForDay } from "./plan.js";
-import { actualPace, deloadActive, dlWeight, exWeight, murphDate, myName, renderAll, save, state, updateDeloadAfterSession } from "./store.js";
+import { actualPace, deloadActive, dlWeight, exWeight, murphDate, myName, planPos, renderAll, save, state, updateAccelAfterSession, updateDeloadAfterSession } from "./store.js";
 
 export let picked=null;
 export let weightFb={};   // transient per-session weight feedback: exerciseName -> "down"|"good"|"up"
@@ -45,11 +45,18 @@ export function buildCoachHTML(c){
     "Rest up, refuel, and I'll see you at the next session.",
     "Keep stacking these. The finish line gets closer every time. 🏁"
   ]);
+  // Earned a jump forward — say so, and say why, so it never looks like a lost session.
+  const jump = c.jumped
+    ? '<div class="coach-jump">⏩ <b>That\'s three easy sessions in a row — you\'re ahead of the plan.</b> '+
+      'I\'ve moved you forward a session, so you\'ll reach the harder phases sooner and your finish date pulls in. '+
+      'Your workout numbers keep climbing as usual.</div>'
+    : '';
   return '<button class="coach-x" aria-label="Dismiss">×</button>'+
     '<div class="coach-kicker">Coach\'s note · '+dayName+'</div>'+
     '<p class="coach-open">'+opener+'</p>'+
     '<p>'+read+'</p>'+
     adj.map(a=>'<p>'+a+'</p>').join("")+
+    jump+
     rec+
     '<p class="coach-close">'+closer+'</p>';
 }
@@ -66,7 +73,7 @@ export function renderRecovery(){
   const el=$("recovery-card"); if(!el) return;
   if(!state.recoveryDue){ el.hidden=true; return; }
   el.hidden=false;
-  const day=ORDER[state.completed.length%4];
+  const day=ORDER[planPos()%4];
   const reason = state.recoveryReason==="pain"
     ? "You flagged something that hurt last session."
     : "Your last session was near-maximal.";
@@ -103,12 +110,12 @@ export function renderBanner(){
   if(deloadActive()){
     slot.innerHTML+='<div class="banner"><span class="ic">🔄</span><span><b>Deload week · session '+(5-state.deload.left)+' of 4.</b> Planned recovery after a hard stretch — go ~15% lighter, drop a set, keep it easy. You\'ll come back stronger.</span></div>';
   }
-  if(state.completed.length>=PHASE1_SESSIONS){
+  if(planPos()>=PHASE1_SESSIONS){
     slot.innerHTML+='<div class="banner done"><span class="ic">🏁</span><span><b>Phase 1 complete — nice work.</b> You can keep logging here in the meantime.</span></div>';
   }
 }
 export function renderNext(){
-  const done=state.completed.length;
+  const done=planPos();
   const day=ORDER[done%4];
   const w=PHASE1[day];
   const dl=deloadActive();
@@ -121,7 +128,7 @@ export function renderNext(){
 }
 // Weight-feedback controls in the "Log this session" area for the current day's weighted lifts.
 export function renderWeights(){
-  const day=ORDER[state.completed.length%4];
+  const day=ORDER[planPos()%4];
   const list=weightedForDay(day);
   const block=$("wt-block");
   if(!list.length){ block.innerHTML=""; return; }
@@ -152,7 +159,7 @@ export function renderWeights(){
   });
 }
 export function renderProgress(){
-  const done=state.completed.length;
+  const done=planPos();
   const session=Math.min(done+1,PHASE1_SESSIONS);
   const week=Math.min(Math.floor(done/4)+1,4);
   const day=ORDER[done%4];
@@ -182,7 +189,15 @@ export function renderPaceLine(){
       p.daysLeft+" more day"+(p.daysLeft===1?"":"s")+" of history.";
   }else if(p.status==="on"){
     el.className="pace-line on";
-    el.innerHTML="✅ <b>On track for "+target+"</b> · you're training <b>"+rate(p.rate)+"×/week</b> vs the "+p.dpw+" you planned.";
+    const jumps=p.credit ? " You've earned <b>"+p.credit+"</b> jump"+(p.credit===1?"":"s")+" forward for easy sessions." : "";
+    el.innerHTML="✅ <b>On track for "+target+"</b> · you're training <b>"+rate(p.rate)+"×/week</b> vs the "+p.dpw+" you planned."+jumps;
+    // Running far enough ahead that the target date itself is worth pulling in.
+    if(p.suggestDate){
+      el.innerHTML+='<div class="pace-ahead">🚀 At this rate you\'d be Murph-ready around <b>'+fmtDate(p.suggestDate)+
+        '</b> — about '+p.aheadWeeks+' weeks early. <button class="pace-move" id="pace-move">Move my target to '+fmtDate(p.suggestDate)+'</button></div>';
+      const btn=$("pace-move");
+      if(btn) btn.onclick=async()=>{ state.murphDate=p.suggestDate; await save(); renderAll(); };
+    }
   }else{
     el.className="pace-line behind";
     const late=Math.max(1,p.weeksLate);
@@ -200,7 +215,10 @@ export function resetInputs(){
 /* ---------------- Handlers ---------------- */
 $("complete").onclick=async()=>{
   if(!picked){$("miss").textContent="Pick a difficulty first.";return;}
-  const done=state.completed.length;
+  // Which workout he's doing follows the PLAN position (credits included); the entry is numbered by
+  // how many he has actually done — renderCoachNote matches on that, and the history log should
+  // count real workouts, not plan slots.
+  const done=planPos();
   const day=ORDER[done%4];
   // Record the weight used per lift this session, and apply "too heavy/light" feedback to next time's recommendation.
   const list=weightedForDay(day); const used={};
@@ -216,17 +234,20 @@ $("complete").onclick=async()=>{
     else if(dir==="up"){ state.weights[e.name]=base+e.w.step; changes.push({name:e.name,from:base,to:state.weights[e.name],dir}); }
     else state.weights[e.name]=base;
   });
-  const entry={session:done+1,day,date:new Date().toISOString(),difficulty:picked,notes:$("notes").value.trim()};
+  const entry={session:state.completed.length+1,day,date:new Date().toISOString(),difficulty:picked,notes:$("notes").value.trim()};
   if(list.length) entry.weights=used;
   // Generate the coach's note from this session's feedback.
   const pain=/\b(hurt|hurts|pain|painful|sharp|tweak|tweaked|strain|strained|pull(ed)?|ache|aching|joint)\b/i.test(entry.notes||"");
-  state.coachNote={ session:entry.session, html:buildCoachHTML({day,difficulty:entry.difficulty,changes,pain}) };
   state.completed.push(entry);
   // Recommend a recovery day after a maximal or painful session.
   state.recoveryDue = (entry.difficulty>=9 || pain);
   state.recoveryReason = pain ? "pain" : (entry.difficulty>=9 ? "hard" : null);
   // Update the deload cycle (reads completed incl. this session).
   updateDeloadAfterSession();
+  // Then the mirror: a run of easy sessions jumps him forward. Deload runs first so a deload that
+  // just started blocks a jump in the same breath.
+  const jumped=updateAccelAfterSession(pain);
+  state.coachNote={ session:entry.session, html:buildCoachHTML({day,difficulty:entry.difficulty,changes,pain,jumped}) };
   resetInputs(); renderAll(); await save();
   const cn=$("coach-note");
   if(cn && !cn.hidden) cn.scrollIntoView({behavior:"smooth",block:"center"});
