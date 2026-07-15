@@ -84,6 +84,33 @@
   .rem-day{flex:1;aspect-ratio:1;max-width:46px;border:1px solid var(--line);background:var(--paper);
     border-radius:9px;font-family:"IBM Plex Mono",monospace;font-size:.85rem;color:var(--soft);cursor:pointer;padding:0;}
   .rem-day.sel{background:var(--olive);color:#fff;border-color:transparent;font-weight:600;}
+  .rem-hint{text-transform:none;letter-spacing:0;color:var(--soft);font-weight:400;}
+  .rem-days-summary{font-family:"IBM Plex Mono",monospace;font-size:.74rem;color:var(--olive-2);margin-top:9px;}
+  /* coach's note */
+  .coach-note{position:relative;background:var(--card);border:1px solid var(--olive);border-left:4px solid var(--olive);
+    border-radius:14px;padding:18px 20px 16px;margin-bottom:18px;box-shadow:var(--shadow);animation:fade .4s ease both;}
+  .coach-note[hidden]{display:none;}
+  .coach-kicker{font-family:"IBM Plex Mono",monospace;font-size:.64rem;letter-spacing:.16em;text-transform:uppercase;color:var(--olive-2);margin-bottom:8px;}
+  .coach-open{font-family:"Barlow Condensed",sans-serif;font-weight:600;font-size:1.3rem;line-height:1.12;color:var(--ink);margin:0 0 10px;}
+  .coach-note p{font-size:.92rem;line-height:1.5;margin:.5em 0;color:var(--ink);}
+  .coach-note p.coach-close{color:var(--soft);font-style:italic;margin-top:12px;}
+  .coach-rec{background:var(--band);border-radius:10px;padding:12px 14px;font-size:.88rem;line-height:1.45;color:var(--soft);margin:12px 0 2px;}
+  .coach-rec b{color:var(--olive);}
+  .coach-flag{background:#F3E4DD;color:#7a3520;border-radius:10px;padding:12px 14px;font-size:.88rem;line-height:1.45;margin:12px 0 2px;}
+  .coach-x{position:absolute;top:10px;right:12px;background:none;border:none;font-size:1.5rem;line-height:1;color:var(--soft);cursor:pointer;padding:2px 6px;}
+  .coach-x:hover{color:var(--ink);}
+  /* recovery-day card */
+  .recovery-card{background:#F3E9DD;border:1px solid #D8B98F;border-radius:16px;padding:18px 20px;margin-bottom:18px;box-shadow:var(--shadow);}
+  .recovery-card[hidden]{display:none;}
+  .rec-kicker{font-family:"IBM Plex Mono",monospace;font-size:.66rem;letter-spacing:.14em;text-transform:uppercase;color:#8a5a2b;margin-bottom:8px;}
+  .recovery-card p{font-size:.92rem;line-height:1.5;color:var(--ink);margin:0 0 14px;}
+  .recovery-card b{color:#7a3f12;}
+  .rec-actions{display:flex;flex-direction:column;gap:10px;}
+  #rec-rest{background:#9a6a2e;}
+  #rec-rest:hover{background:#835723;}
+  #rec-proceed{align-self:center;}
+  .deload-tag{font-family:"IBM Plex Mono",monospace;font-size:.6rem;letter-spacing:.06em;text-transform:uppercase;
+    background:var(--band);color:var(--olive-2);border-radius:5px;padding:1px 5px;margin-left:5px;}
   #rem-time{border:1px solid var(--line);border-radius:10px;background:var(--paper);font-family:"Inter",sans-serif;
     font-size:1rem;padding:11px 13px;color:var(--ink);}
   #rem-save{margin-top:4px;}
@@ -156,7 +183,7 @@
   .supp-card .today{font-family:"IBM Plex Mono",monospace;font-size:.72rem;color:var(--soft);margin:0 0 14px;}
   .supp-row{display:flex;align-items:center;gap:12px;padding:12px 0;border-top:1px solid var(--line);}
   .supp-row:first-of-type{border-top:none;}
-  .supp-row .lab{font-weight:600;font-size:.95rem;flex:none;width:82px;}
+  .supp-row .lab{font-weight:600;font-size:.95rem;flex:none;width:104px;white-space:nowrap;}
   .creatine-toggle{flex:1;border:1px solid var(--line);background:var(--paper);border-radius:10px;
     padding:12px 14px;font-family:"Inter",sans-serif;font-size:.9rem;font-weight:600;color:var(--soft);
     cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:all .15s;}
@@ -253,7 +280,7 @@
   .fade-in{animation:fade .4s ease both;}
   @keyframes fade{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:none;}}
   @media(prefers-reduced-motion:reduce){.fade-in{animation:none;}.bar>i{transition:none;}}
-  @media(max-width:420px){.diff{gap:4px;}.diff button{font-size:.75rem;}h1{font-size:2rem;}.supp-row .lab{width:70px;}}
+  @media(max-width:420px){.diff{gap:4px;}.diff button{font-size:.75rem;}h1{font-size:2rem;}.supp-row .lab{width:98px;}}
 </style>
 </head>
 <body>
@@ -294,6 +321,14 @@
 <div class="wrap">
   <!-- HOME: today's workout -->
   <section class="view" id="view-workout">
+    <div class="recovery-card" id="recovery-card" hidden>
+      <div class="rec-kicker">🛌 Recovery recommended</div>
+      <p id="rec-msg"></p>
+      <div class="rec-actions">
+        <button class="complete" id="rec-rest">Take a rest day</button>
+        <button class="mini" id="rec-proceed">Do the workout anyway</button>
+      </div>
+    </div>
     <header>
       <div class="kicker">Murph · Phase 1 Tracker</div>
       <h1 id="title">Loading…</h1>
@@ -315,6 +350,8 @@
       <button class="complete" id="complete" disabled>Mark complete</button>
       <div class="miss" id="miss"></div>
     </div>
+
+    <div class="coach-note" id="coach-note" hidden></div>
   </section>
 
   <!-- DAILY SUPPLEMENTS -->
@@ -371,8 +408,9 @@
       <div class="rem-status" id="rem-status"></div>
       <div id="rem-prefs" hidden>
         <div class="rem-field">
-          <label class="rem-label">Remind me on</label>
+          <label class="rem-label">Remind me on <span class="rem-hint">(tap to toggle · green = on)</span></label>
           <div class="rem-days" id="rem-days"></div>
+          <div class="rem-days-summary" id="rem-days-summary"></div>
         </div>
         <div class="rem-field">
           <label class="rem-label">At</label>
@@ -508,9 +546,122 @@ function normalizeState(){
   if(!state.weightLog) state.weightLog=[];
   if(!state.fcmTokens) state.fcmTokens=[];
   if(!state.reminderPrefs) state.reminderPrefs={enabled:false,days:[0,1,2,3,4,5,6],time:"07:00",tz:(Intl.DateTimeFormat().resolvedOptions().timeZone||"America/New_York")};
+  if(typeof state.recoveryDue!=="boolean") state.recoveryDue=false;
+  if(state.recoveryReason===undefined) state.recoveryReason=null;
+  if(!state.deload) state.deload={active:false,left:0,cooldown:0};
   // migrate a pre-existing single bodyweight into the dated weight log
   if(state.bodyweight>0 && !state.weightLog.length) state.weightLog=[{date:todayKey(),lb:state.bodyweight}];
 }
+
+/* ---- Coach's note: a trainer-style summary generated from the logged feedback ---- */
+function pick(a){ return a[Math.floor(Math.random()*a.length)]; }
+function shortName(n){ return n.replace(/\s*\(.*?\)\s*$/,"").replace(/\s+or\s+.*$/,"").trim(); }
+function joinNames(arr){
+  const ns=arr.map(x=>shortName(x.name));
+  if(ns.length<=1) return ns[0]||"";
+  if(ns.length===2) return ns[0]+" and "+ns[1];
+  return ns.slice(0,-1).join(", ")+", and "+ns[ns.length-1];
+}
+function buildCoachHTML(c){
+  const dayName = PHASE1[c.day] ? PHASE1[c.day].nm : ("Day "+c.day);
+  const opener = pick([
+    "Nice work — that's another one in the books. 💪",
+    "Great job showing up and getting it done. 🙌",
+    "Logged and done — that consistency is the whole game.",
+    "Strong work today. This is how it gets built, one session at a time. 🔥"
+  ]);
+  const d=c.difficulty; let read;
+  if(d<=3) read="You rated it <b>"+d+"/10</b> — comfortable, with plenty left in the tank.";
+  else if(d<=6) read="You rated it <b>"+d+"/10</b> — a solid, controlled effort, right in the zone where progress happens.";
+  else if(d<=8) read="You rated it <b>"+d+"/10</b> — a genuine grind. You worked for this one.";
+  else read="You rated it <b>"+d+"/10</b> — brutal. You left it all out there.";
+
+  const ups=(c.changes||[]).filter(x=>x.dir==="up");
+  const downs=(c.changes||[]).filter(x=>x.dir==="down");
+  const adj=[];
+  if(ups.length) adj.push("You said "+joinNames(ups)+" felt too light, so I've bumped "+(ups.length>1?"them":"it")+" up for next time — "+ups.map(x=>shortName(x.name)+" to <b>"+x.to+" lb</b>").join(", ")+". We progress by adding a little, often.");
+  if(downs.length) adj.push("Since "+joinNames(downs)+" felt too heavy, I've eased "+(downs.length>1?"them":"it")+" back — "+downs.map(x=>shortName(x.name)+" to <b>"+x.to+" lb</b>").join(", ")+". Clean reps beat heavy grinds this phase.");
+  if(!ups.length && !downs.length){
+    if(d<=3) adj.push("That was on the easy side, so next time we'll add a little — a rep or two per set, or a small bump in load. No big leaps.");
+    else if(d<=6) adj.push("This is exactly the effort we want. We'll hold the numbers steady and let your body consolidate before the next small step up.");
+    else if(d<=8) adj.push("We'll keep next session right about here — no need to add load while you're still adapting to this volume.");
+    else adj.push("No added load next time — when a session is this hard, holding steady <i>is</i> the progression. Let the adaptation catch up.");
+  }
+  let rec="";
+  if(c.pain){
+    rec='<div class="coach-flag">⚠ You flagged something that hurt. Muscle burn is fine — but if it\'s sharp or joint pain, back off that movement and give it a day or two. Never push through joint pain.</div>';
+  } else if(d>=9){
+    rec='<div class="coach-rec"><b>Recovery call:</b> that was near-maximal — take an easy day before your next session. A good recovery day is a short walk or light stretch, plenty of water, a solid protein hit, and 7–9 hours of sleep. That\'s when the strength actually gets built.</div>';
+  } else if(d>=7){
+    rec='<div class="coach-rec"><b>Tonight:</b> prioritize food, water, and sleep. You don\'t need a full rest day, but don\'t stack another hard session right on top of this one.</div>';
+  }
+  const closer = pick([
+    "Onto the next one — you've got this. 🫡",
+    "Same energy next round. Proud of the work.",
+    "Rest up, refuel, and I'll see you at the next session.",
+    "Keep stacking these. The finish line gets closer every time. 🏁"
+  ]);
+  return '<button class="coach-x" aria-label="Dismiss">×</button>'+
+    '<div class="coach-kicker">Coach\'s note · '+dayName+'</div>'+
+    '<p class="coach-open">'+opener+'</p>'+
+    '<p>'+read+'</p>'+
+    adj.map(a=>'<p>'+a+'</p>').join("")+
+    rec+
+    '<p class="coach-close">'+closer+'</p>';
+}
+function renderCoachNote(){
+  const el=$("coach-note"); if(!el) return;
+  const c=state.coachNote;
+  if(!c || c.session!==state.completed.length){ el.hidden=true; el.innerHTML=""; return; }
+  el.hidden=false; el.innerHTML=c.html;
+  const x=el.querySelector(".coach-x");
+  if(x) x.onclick=async()=>{ state.coachNote=null; el.hidden=true; el.innerHTML=""; await save(); };
+}
+
+/* ---- Deload cycle: 3 hard sessions (>=8) in a row -> a 4-session lighter block ---- */
+function deloadActive(){ return !!(state.deload && state.deload.active); }
+// Suggested weight for display: base weight, pulled to ~85% during a deload block.
+function dlWeight(e){
+  const base=exWeight(e);
+  if(deloadActive()) return Math.max(e.w.step, Math.round(base*0.85/e.w.step)*e.w.step);
+  return base;
+}
+function updateDeloadAfterSession(){
+  const dl=state.deload||(state.deload={active:false,left:0,cooldown:0});
+  if(dl.active){
+    dl.left--;
+    if(dl.left<=0){ dl.active=false; dl.left=0; dl.cooldown=6; }   // end deload, brief cooldown before another can trigger
+  }else{
+    if(dl.cooldown>0) dl.cooldown--;
+    const last3=state.completed.slice(-3);
+    if(dl.cooldown<=0 && last3.length>=3 && last3.every(s=>s.difficulty>=8)){
+      dl.active=true; dl.left=4;   // one A->B->C->D cycle
+    }
+  }
+}
+
+/* ---- Recovery-day recommendation (real state, not just advice) ---- */
+function renderRecovery(){
+  const el=$("recovery-card"); if(!el) return;
+  if(!state.recoveryDue){ el.hidden=true; return; }
+  el.hidden=false;
+  const day=ORDER[state.completed.length%4];
+  const reason = state.recoveryReason==="pain"
+    ? "You flagged something that hurt last session."
+    : "Your last session was near-maximal.";
+  $("rec-msg").innerHTML = reason+" A <b>recovery day</b> before Day "+day+" ("+PHASE1[day].nm+") is the smart call — a short walk or easy stretch, water, protein, and a good night's sleep. That's when the gains actually happen.";
+}
+$("rec-rest").onclick=async()=>{
+  state.recoveryDue=false; state.recoveryReason=null;
+  if(!state.restDays) state.restDays=0; state.restDays++;
+  render(); await save();
+  window.scrollTo({top:0,behavior:"smooth"});
+};
+$("rec-proceed").onclick=async()=>{
+  state.recoveryDue=false; state.recoveryReason=null;
+  render(); await save();
+  const nx=document.querySelector('#view-workout .next'); if(nx) nx.scrollIntoView({behavior:"smooth",block:"start"});
+};
 
 // Session #1 (Jul 13, 2026), logged in chat before the tracker existed — his baseline.
 function seedState(){
@@ -598,7 +749,7 @@ async function initUserData(email){
   try{ snap=await getDoc(userRef); }catch(e){}
   if(snap && snap.exists() && Array.isArray(snap.data().completed)){
     const d=snap.data();
-    state={completed:d.completed||[], supps:d.supps||{}, plan:d.plan||"murph-phase1", bodyweight:d.bodyweight||null, weights:d.weights||{}, weightLog:d.weightLog||[], fcmTokens:d.fcmTokens||[], reminderPrefs:d.reminderPrefs||null};
+    state={completed:d.completed||[], supps:d.supps||{}, plan:d.plan||"murph-phase1", bodyweight:d.bodyweight||null, weights:d.weights||{}, weightLog:d.weightLog||[], fcmTokens:d.fcmTokens||[], reminderPrefs:d.reminderPrefs||null, coachNote:d.coachNote||null, recoveryDue:!!d.recoveryDue, recoveryReason:d.recoveryReason||null, deload:d.deload||{active:false,left:0,cooldown:0}};
   }else{
     // New profile. Only the husband inherits the pre-cloud Session #1 backfill /
     // any log already stored on his device; everyone else starts clean.
@@ -628,7 +779,8 @@ async function save(){
         email:user.email, name:nameFor((user.email||"").toLowerCase()),
         plan:state.plan||"murph-phase1", bodyweight:state.bodyweight||null, weights:state.weights||{},
         weightLog:state.weightLog||[], fcmTokens:state.fcmTokens||[], reminderPrefs:state.reminderPrefs||null,
-        completed:state.completed, supps:state.supps, updatedAt:Date.now()
+        coachNote:state.coachNote||null, recoveryDue:!!state.recoveryDue, recoveryReason:state.recoveryReason||null,
+        deload:state.deload||{active:false,left:0,cooldown:0}, completed:state.completed, supps:state.supps, updatedAt:Date.now()
       }, {merge:true});
     }catch(e){ console.warn("cloud save failed (will retry when online):", e); }
   }
@@ -652,6 +804,9 @@ function buildDiff(){
 
 function renderBanner(){
   const slot=$("banner-slot"); slot.innerHTML="";
+  if(deloadActive()){
+    slot.innerHTML+='<div class="banner"><span class="ic">🔄</span><span><b>Deload week · session '+(5-state.deload.left)+' of 4.</b> Planned recovery after a hard stretch — go ~15% lighter, drop a set, keep it easy. You\'ll come back stronger.</span></div>';
+  }
   if(state.completed.length>=PHASE1_SESSIONS){
     slot.innerHTML+='<div class="banner done"><span class="ic">🏁</span><span><b>Phase 1 complete — nice work.</b> You can keep logging here in the meantime.</span></div>';
   }
@@ -661,8 +816,9 @@ function renderNext(){
   const done=state.completed.length;
   const day=ORDER[done%4];
   const w=PHASE1[day];
+  const dl=deloadActive();
   let rows=w.ex.map(e=>{
-    const dose=e.w ? (e.dose+' · '+exWeight(e)+' lb') : e.dose;
+    const dose=e.w ? (e.dose+' · '+dlWeight(e)+' lb'+(dl?' <span class="deload-tag">deload</span>':'')) : e.dose;
     return '<div class="ex"><div class="row"><span class="name">'+e.name+'</span><span class="dose">'+dose+'</span></div>'+(e.note?'<div class="note">'+e.note+'</div>':'')+'</div>';
   }).join("");
   $("next-card").className="next fade-in";
@@ -675,6 +831,10 @@ function renderWeights(){
   const list=weightedForDay(day);
   const block=$("wt-block");
   if(!list.length){ block.innerHTML=""; return; }
+  if(deloadActive()){
+    block.innerHTML='<div class="wt-title">Deload week</div><div class="wt-note">Weights are pulled back and feedback is paused this week — just move well and keep it easy.</div>';
+    return;
+  }
   let html='<div class="wt-title">Weights — how did they feel?</div>';
   list.forEach((e,i)=>{
     const cur=exWeight(e);
@@ -752,7 +912,7 @@ function renderSupps(){
 
 function render(){
   if(!ready) return;
-  renderProgress();renderNext();renderWeights();renderHist();renderSupps();renderBanner();renderWeightChart();renderReminders();
+  renderRecovery();renderProgress();renderNext();renderWeights();renderHist();renderSupps();renderBanner();renderWeightChart();renderReminders();renderCoachNote();
 }
 
 // Bodyweight-over-time line chart for the Progress tracker view.
@@ -806,18 +966,32 @@ $("complete").onclick=async()=>{
   // Record the weight used per lift this session, and apply "too heavy/light" feedback to next time's recommendation.
   const list=weightedForDay(day); const used={};
   if(!state.weights) state.weights={};
+  const dl=deloadActive();
+  const changes=[];
   list.forEach(e=>{
-    const cur=exWeight(e); used[e.name]=cur;
+    const base=exWeight(e);
+    used[e.name]= dl ? dlWeight(e) : base;   // record what was actually lifted
+    if(dl) return;                            // deload week: don't change base weights or take feedback
     const dir=weightFb[e.name];
-    if(dir==="down") state.weights[e.name]=Math.max(e.w.step, cur-e.w.step);
-    else if(dir==="up") state.weights[e.name]=cur+e.w.step;
-    else state.weights[e.name]=cur;
+    if(dir==="down"){ state.weights[e.name]=Math.max(e.w.step, base-e.w.step); changes.push({name:e.name,from:base,to:state.weights[e.name],dir}); }
+    else if(dir==="up"){ state.weights[e.name]=base+e.w.step; changes.push({name:e.name,from:base,to:state.weights[e.name],dir}); }
+    else state.weights[e.name]=base;
   });
   const entry={session:done+1,day,date:new Date().toISOString(),difficulty:picked,notes:$("notes").value.trim()};
   if(list.length) entry.weights=used;
+  // Generate the coach's note from this session's feedback.
+  const pain=/\b(hurt|hurts|pain|painful|sharp|tweak|tweaked|strain|strained|pull(ed)?|ache|aching|joint)\b/i.test(entry.notes||"");
+  state.coachNote={ session:entry.session, html:buildCoachHTML({day,difficulty:entry.difficulty,changes,pain}) };
   state.completed.push(entry);
+  // Recommend a recovery day after a maximal or painful session.
+  state.recoveryDue = (entry.difficulty>=9 || pain);
+  state.recoveryReason = pain ? "pain" : (entry.difficulty>=9 ? "hard" : null);
+  // Update the deload cycle (reads completed incl. this session).
+  updateDeloadAfterSession();
   resetInputs(); render(); await save();
-  window.scrollTo({top:0,behavior:"smooth"});
+  const cn=$("coach-note");
+  if(cn && !cn.hidden) cn.scrollIntoView({behavior:"smooth",block:"center"});
+  else window.scrollTo({top:0,behavior:"smooth"});
 };
 $("creatine-btn").onclick=async()=>{
   const tk=todayKey(); state.supps[tk]=state.supps[tk]||{};
@@ -849,7 +1023,11 @@ $("bw-save").onclick=async()=>{
 $("undo").onclick=async()=>{if(!state.completed.length)return;state.completed.pop();render();await save();};
 $("reset").onclick=async()=>{
   if(!confirm("Clear your entire log (workouts + supplements)? This can't be undone."))return;
-  state={completed:[],supps:{},plan:"murph-phase1",bodyweight:state.bodyweight||null,weights:state.weights||{},weightLog:state.weightLog||[]};resetInputs();render();$("copy-panel").classList.remove("show");await save();
+  // Clear the log; keep profile/settings (bodyweight, weights, weight history, reminder setup).
+  state={completed:[],supps:{},plan:"murph-phase1",bodyweight:state.bodyweight||null,weights:state.weights||{},
+    weightLog:state.weightLog||[],reminderPrefs:state.reminderPrefs||null,fcmTokens:state.fcmTokens||[]};
+  normalizeState();
+  resetInputs();render();$("copy-panel").classList.remove("show");await save();
 };
 $("copy").onclick=async()=>{
   let txt="Murph Phase 1 — "+nameFor((user&&user.email||"").toLowerCase())+"'s session log:\n";
@@ -895,7 +1073,15 @@ document.querySelectorAll(".nav-item").forEach(b=>{ b.onclick=()=>showView(b.dat
 
 /* ---------------- Reminders (push notifications) ---------------- */
 const DAY_LABELS=["S","M","T","W","T","F","S"];
+const DAY_NAMES=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
 function setRemStatus(msg,type){ const el=$("rem-status"); if(!el)return; el.textContent=msg||""; el.className="rem-status"+(type?" "+type:""); }
+function updateDaySummary(){
+  const el=$("rem-days-summary"); if(!el) return;
+  const sel=[...$("rem-days").querySelectorAll(".rem-day.sel")].map(b=>+b.dataset.d).sort((a,b)=>a-b);
+  if(sel.length===7){ el.textContent="On: every day"; }
+  else if(sel.length){ el.textContent="On: "+sel.map(i=>DAY_NAMES[i]).join(" · "); }
+  else{ el.textContent="No days selected — pick at least one."; }
+}
 function renderReminders(){
   const btn=$("rem-toggle"); if(!btn) return;
   const p=state.reminderPrefs||{}; const on=!!p.enabled;
@@ -905,8 +1091,9 @@ function renderReminders(){
   if(on){
     const days=p.days||[];
     $("rem-days").innerHTML=DAY_LABELS.map((d,i)=>'<button type="button" class="rem-day'+(days.includes(i)?" sel":"")+'" data-d="'+i+'">'+d+'</button>').join("");
-    $("rem-days").querySelectorAll(".rem-day").forEach(b=>{ b.onclick=()=>b.classList.toggle("sel"); });
+    $("rem-days").querySelectorAll(".rem-day").forEach(b=>{ b.onclick=()=>{ b.classList.toggle("sel"); updateDaySummary(); }; });
     $("rem-time").value=p.time||"07:00";
+    updateDaySummary();
   }
   if(DEV && !$("rem-status").textContent){
     setRemStatus("Preview mode: you can set the schedule here, but reminders only actually send from the live app.","");
