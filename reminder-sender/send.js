@@ -1,6 +1,7 @@
 /* Workout-reminder sender. Runs on a schedule from GitHub Actions.
-   Reads each user's reminderPrefs + fcmTokens from Firestore and sends an FCM
-   push to anyone whose chosen day + time matches this run (in their timezone). */
+   Reads each user's reminderPrefs + program state from Firestore and sends a
+   DYNAMIC push whose text reflects rest days, deloads, and weekly training load —
+   sent once, on the first run at/after the user's chosen time each chosen day. */
 const admin = require('firebase-admin');
 const { DateTime } = require('luxon');
 
@@ -12,30 +13,61 @@ const db = admin.firestore();
 const messaging = admin.messaging();
 
 const SITE = 'https://carolinebyrnes25.github.io/murph-tracker/';
-const WINDOW = 30; // minutes; must match the cron cadence
-
 const DRY = process.env.DRY_RUN === '1';
+const ORDER = ['A', 'B', 'C', 'D'];
+const DAYNAME = { A: 'Pull + Run base', B: 'Squat + Intervals', C: 'Push + Pull', D: 'Mixed conditioning' };
+
+// Choose the reminder text from the user's actual program state.
+function buildMessage(u, now, todayStr) {
+  const completed = Array.isArray(u.completed) ? u.completed : [];
+  const done = completed.length;
+  const nextDay = ORDER[done % 4];
+  const nextName = DAYNAME[nextDay] || ('Day ' + nextDay);
+  const last = completed[done - 1];
+  const trainedToday = last && last.date &&
+    DateTime.fromISO(last.date).setZone(now.zoneName).toFormat('yyyy-LL-dd') === todayStr;
+  const weekAgo = now.minus({ days: 7 });
+  const last7 = completed.filter(c => c.date && DateTime.fromISO(c.date) >= weekAgo).length;
+  const deload = !!(u.deload && u.deload.active);
+
+  // 1) App explicitly flagged recovery (last session was maximal or hurt).
+  if (u.recoveryDue) {
+    return { title: 'Recovery day 🛌', body: 'Your last session was tough — take it easy today. A short walk, water, protein, and good sleep. Back at it tomorrow.' };
+  }
+  // 2) Already worked out today.
+  if (trainedToday) {
+    return { title: 'Nice work today 💪', body: 'You already trained — now recover. Food, water, and sleep are where the gains happen.' };
+  }
+  // 3) Already hit ~4 sessions this week (respect the 4x/week cadence even if reminders are daily).
+  if (last7 >= 4) {
+    return { title: 'Rest day earned 🙌', body: "You've hit 4 sessions in the last week — plenty. Take a rest day unless you're feeling fresh." };
+  }
+  // 4) Deload week — still train, but lighter.
+  if (deload) {
+    return { title: 'Deload — keep it light', body: `If you train today, go ~15% lighter and clean. Day ${nextDay} · ${nextName}.` };
+  }
+  // 5) Normal training nudge.
+  return { title: 'Time to train 💪', body: `Day ${nextDay} · ${nextName} is up. Let's go.` };
+}
 
 (async () => {
-  console.log((DRY ? '[DRY RUN] ' : '') + 'Run at ' + DateTime.now().setZone('America/New_York').toFormat("ccc yyyy-LL-dd HH:mm") + ' ET');
+  console.log((DRY ? '[DRY RUN] ' : '') + 'Run at ' + DateTime.now().setZone('America/New_York').toFormat('ccc yyyy-LL-dd HH:mm') + ' ET');
   const snap = await db.collection('users').get();
-  const targets = []; // { uid, token }
-  const toMark = [];  // users to stamp lastReminderSent after sending
   console.log(`Scanning ${snap.size} user profile(s).`);
+  const due = []; // { uid, tokens, message, day }
 
   for (const docSnap of snap.docs) {
     const u = docSnap.data();
     const p = u.reminderPrefs;
     const tokens = Array.isArray(u.fcmTokens) ? u.fcmTokens : [];
-    // Diagnostic summary (no email/token values, just config) to debug reminder delivery.
     if (p || tokens.length) {
-      console.log(`profile ${docSnap.id.slice(0,6)}… enabled=${!!(p && p.enabled)} days=${p && p.days ? JSON.stringify(p.days) : '-'} time=${p ? p.time : '-'} tz=${p ? p.tz : '-'} tokens=${tokens.length}`);
+      console.log(`profile ${docSnap.id.slice(0, 6)}… enabled=${!!(p && p.enabled)} days=${p && p.days ? JSON.stringify(p.days) : '-'} time=${p ? p.time : '-'} tz=${p ? p.tz : '-'} tokens=${tokens.length}`);
     }
     if (!p || !p.enabled || tokens.length === 0) continue;
 
     const tz = p.tz || 'America/New_York';
     const now = DateTime.now().setZone(tz);
-    const jsDay = now.weekday % 7; // luxon Mon=1..Sun=7  ->  0=Sun..6=Sat
+    const jsDay = now.weekday % 7; // luxon Mon=1..Sun=7 -> 0=Sun..6=Sat
     const days = Array.isArray(p.days) ? p.days : [];
     if (!days.includes(jsDay)) continue;
 
@@ -43,47 +75,43 @@ const DRY = process.env.DRY_RUN === '1';
     const userMin = ph * 60 + pm;
     const nowMin = now.hour * 60 + now.minute;
     const todayStr = now.toFormat('yyyy-LL-dd');
-    // Robust to GitHub's unreliable cron: send once, on the FIRST run at/after the
-    // user's time on a chosen day — not only inside a narrow window.
-    if (nowMin < userMin) continue;                 // their time hasn't arrived yet today
-    if (u.lastReminderSent === todayStr) continue;  // already reminded today
+    if (nowMin < userMin) continue;                          // their time hasn't arrived yet today
+    if (!DRY && u.lastReminderSent === todayStr) continue;   // already reminded today (dry runs still preview)
 
-    for (const t of tokens) targets.push({ uid: docSnap.id, token: t });
-    toMark.push({ uid: docSnap.id, day: todayStr });
+    due.push({ uid: docSnap.id, tokens, message: buildMessage(u, now, todayStr), day: todayStr });
   }
 
-  if (targets.length === 0) { console.log('No reminders due this run.'); return; }
-  console.log(`Reminders due: ${targets.length} token(s) across ${toMark.length} user(s).`);
-  if (DRY) { console.log('[DRY RUN] Not sending or marking — would notify the user(s) above.'); return; }
+  if (due.length === 0) { console.log('No reminders due this run.'); return; }
+  const total = due.reduce((n, d) => n + d.tokens.length, 0);
+  console.log(`Reminders due: ${total} token(s) across ${due.length} user(s).`);
+  due.forEach(d => console.log(`  -> ${d.uid.slice(0, 6)}… "${d.message.title} — ${d.message.body}"`));
+  if (DRY) { console.log('[DRY RUN] Not sending or marking.'); return; }
 
   const deadByUid = {};
-  for (const { uid, token } of targets) {
-    try {
-      await messaging.send({
-        token,
-        notification: { title: 'Murph Tracker', body: "Time to train 💪 — log today's workout." },
-        webpush: { fcmOptions: { link: SITE } }
-      });
-    } catch (e) {
-      const code = (e.errorInfo && e.errorInfo.code) || e.code || String(e);
-      console.log(`send failed (${code}) for ${token.slice(0, 12)}…`);
-      if (/not-registered|invalid-argument|invalid-registration-token/.test(code)) {
-        (deadByUid[uid] = deadByUid[uid] || []).push(token);
+  for (const d of due) {
+    for (const token of d.tokens) {
+      try {
+        await messaging.send({
+          token,
+          notification: { title: d.message.title, body: d.message.body },
+          webpush: { fcmOptions: { link: SITE } }
+        });
+      } catch (e) {
+        const code = (e.errorInfo && e.errorInfo.code) || e.code || String(e);
+        console.log(`send failed (${code}) for ${token.slice(0, 12)}…`);
+        if (/not-registered|invalid-argument|invalid-registration-token/.test(code)) {
+          (deadByUid[d.uid] = deadByUid[d.uid] || []).push(token);
+        }
       }
     }
   }
-
-  // Prune tokens the push service rejected as dead.
   for (const uid of Object.keys(deadByUid)) {
-    await db.collection('users').doc(uid).update({
-      fcmTokens: admin.firestore.FieldValue.arrayRemove(...deadByUid[uid])
-    });
+    await db.collection('users').doc(uid).update({ fcmTokens: admin.firestore.FieldValue.arrayRemove(...deadByUid[uid]) });
     console.log(`Pruned ${deadByUid[uid].length} dead token(s) for ${uid}.`);
   }
-  // Stamp who got reminded today so we don't double-send on later runs.
-  for (const m of toMark) {
-    try { await db.collection('users').doc(m.uid).update({ lastReminderSent: m.day }); }
-    catch (e) { console.log('mark failed for ' + m.uid.slice(0, 6)); }
+  for (const d of due) {
+    try { await db.collection('users').doc(d.uid).update({ lastReminderSent: d.day }); }
+    catch (e) { console.log('mark failed for ' + d.uid.slice(0, 6)); }
   }
   console.log('Done.');
-})().catch((e) => { console.error(e); process.exit(1); });
+})().catch(e => { console.error(e); process.exit(1); });
