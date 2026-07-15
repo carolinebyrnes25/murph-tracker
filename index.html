@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Murph Tracker — Phase 1</title>
+<title>Murph Tracker</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
@@ -107,6 +107,9 @@
   .ms-card.big .ms-label,.ms-card.tgt .ms-label{color:var(--olive);}
   .ms-sub2{font-family:"IBM Plex Mono",monospace;font-size:.63rem;color:var(--soft);margin-top:2px;}
   .ms-card.done .ms-sub2{color:var(--olive-2);}
+  /* hand-overridden: dashed edge + amber caption, so it never passes for data-earned */
+  .ms-card.ov{border-style:dashed;border-color:var(--flag);}
+  .ms-card.ov .ms-sub2{color:var(--flag);font-style:italic;}
   .ms-sub{font-size:.82rem;color:var(--soft);line-height:1.45;margin:0 0 8px;}
   .ms-sub b{color:var(--olive);font-weight:600;}
   .lift-sel{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px;}
@@ -209,7 +212,10 @@
   .ex .row{display:flex;justify-content:space-between;gap:12px;align-items:baseline;}
   .ex .name{font-weight:600;font-size:.95rem;}
   .ex .dose{font-family:"IBM Plex Mono",monospace;font-size:.78rem;color:var(--olive);white-space:nowrap;}
-  .ex .note{font-size:.8rem;color:var(--soft);margin-top:2px;}
+  /* .what = what the movement IS (plain English, one line). .note = a coaching cue — kept
+     visually distinct in olive so the two lines don't read as one grey blur. */
+  .ex .what{font-size:.79rem;color:var(--soft);margin-top:3px;line-height:1.45;}
+  .ex .note{font-size:.76rem;color:var(--olive-2);margin-top:3px;}
 
   .log-box{background:var(--card);border:1px solid var(--line);border-radius:16px;
     box-shadow:var(--shadow);padding:20px 22px;margin-bottom:18px;}
@@ -294,8 +300,25 @@
   .hist{display:flex;flex-direction:column;gap:8px;}
   .empty{color:var(--soft);font-size:.9rem;padding:18px 0;text-align:center;
     border:1px dashed var(--line);border-radius:12px;}
+  /* .entry is the shell; .entry-main is the tappable summary row that expands the detail. */
   .entry{background:var(--card);border:1px solid var(--line);border-radius:11px;
-    padding:12px 16px;display:flex;align-items:center;gap:14px;box-shadow:var(--shadow);}
+    box-shadow:var(--shadow);overflow:hidden;}
+  .entry-main{padding:12px 16px;display:flex;align-items:center;gap:14px;cursor:pointer;}
+  .entry-main:hover{background:var(--paper);}
+  .entry-main:focus-visible{outline:2px solid var(--olive-2);outline-offset:-2px;}
+  .entry .chev{flex:none;color:var(--soft);font-size:.7rem;transition:transform .18s;}
+  .entry.open .chev{transform:rotate(180deg);}
+  .hist-detail{display:none;padding:2px 16px 14px;border-top:1px solid var(--line);}
+  .entry.open .hist-detail{display:block;}
+  .hd-h{font-family:"Barlow Condensed",sans-serif;font-weight:700;text-transform:uppercase;
+    letter-spacing:.07em;font-size:.8rem;color:var(--olive);margin:12px 0 6px;}
+  .hd-ex{display:flex;justify-content:space-between;gap:12px;align-items:baseline;padding:5px 0;
+    border-top:1px solid var(--line);}
+  .hd-ex:first-of-type{border-top:none;}
+  .hd-n{font-size:.84rem;font-weight:600;}
+  .hd-d{font-family:"IBM Plex Mono",monospace;font-size:.72rem;color:var(--olive);white-space:nowrap;}
+  .hd-fb{font-size:.84rem;color:var(--ink);padding:3px 0;}
+  .hd-none{color:var(--soft);font-style:italic;}
   .entry .badge{width:34px;height:34px;flex:none;border-radius:9px;background:var(--band);
     font-family:"Barlow Condensed",sans-serif;font-weight:700;font-size:1.1rem;color:var(--olive);
     display:flex;align-items:center;justify-content:center;}
@@ -346,7 +369,7 @@
 <!-- Sign-in overlay (shown when signed out) -->
 <div class="auth-overlay" id="auth-overlay" hidden>
   <div class="auth-card">
-    <div class="kicker">Murph · Phase 1 Tracker</div>
+    <div class="kicker">Murph Tracker</div>
     <h2 id="auth-title">Sign in</h2>
     <p class="auth-msg" id="auth-msg">Sign in with your Google account to sync your workouts. No password needed.</p>
     <button id="auth-send">Continue with Google</button>
@@ -362,7 +385,7 @@
 
 <div class="drawer-backdrop" id="drawer-backdrop"></div>
 <nav class="drawer" id="drawer" aria-label="Sections">
-  <div class="drawer-head"><div class="kicker">Murph · Phase 1</div></div>
+  <div class="drawer-head"><div class="kicker">Murph Tracker</div></div>
   <ul class="nav">
     <li><button class="nav-item active" data-view="workout" data-title="Workout">Workout</button></li>
     <li><button class="nav-item" data-view="supps" data-title="Daily supplements">Daily supplements</button></li>
@@ -388,7 +411,7 @@
       </div>
     </div>
     <header>
-      <div class="kicker">Murph · Phase 1 Tracker</div>
+      <div class="kicker">Murph Tracker</div>
       <h1 id="title">Loading…</h1>
       <div class="progress-meta"><span id="prog-left">—</span><span id="prog-right"></span></div>
       <div class="bar"><i id="bar"></i></div>
@@ -512,7 +535,7 @@
 
     <div class="supp-card">
       <h2>Milestones</h2>
-      <p class="ms-sub">The road to Murph: <b>1-mi run · 100 pull-ups · 200 push-ups · 300 squats · 1-mi run</b>, then the 20-lb vest. Each tier is a bigger fraction of those targets. They tick themselves as your workouts and benchmark tests reach the numbers — the big three at the end are yours to tap.</p>
+      <p class="ms-sub">The road to Murph: <b>1-mi run · 100 pull-ups · 200 push-ups · 300 squats · 1-mi run</b>, then the 20-lb vest. Each tier is a bigger fraction of those targets. They tick themselves as your workouts and benchmark tests reach the numbers — and you can tap any of them to set it by hand.</p>
       <div id="milestones"></div>
     </div>
 
@@ -583,28 +606,28 @@ catch(e){ db = getFirestore(fbApp); }
 // here trips a milestone. Give later phases the same `totals` and their milestones check themselves.
 const PHASE1 = {
   A:{nm:"Pull + Run base",tag:"Pulling pattern · easy running",totals:{pullups:0,pushups:0,squats:0,mile:0},ex:[
-    {name:"Dead hang",dose:"3 × 15–20s"},
-    {name:"Inverted row (barbell/TRX)",dose:"3 × 8–10",note:"More upright = easier · more horizontal = harder"},
-    {name:"Lat pulldown or assisted pull-up",dose:"3 × 8–10",w:{def:100,step:10}},
-    {name:"Incline push-ups",dose:"3 × 8–12"},
-    {name:"Run / walk",dose:"15 min",note:"Jog 1 min / walk 2 min"}]},
+    {name:"Dead hang",dose:"3 × 15–20s",what:"Hang from a pull-up bar, arms straight, feet off the floor."},
+    {name:"Inverted row (barbell/TRX)",dose:"3 × 8–10",what:"Lie under a bar and pull your chest up to it, body straight.",note:"More upright = easier · more horizontal = harder"},
+    {name:"Lat pulldown or assisted pull-up",dose:"3 × 8–10",what:"Machine version of a pull-up — same muscles, at a weight you pick.",w:{def:100,step:10}},
+    {name:"Incline push-ups",dose:"3 × 8–12",what:"Push-ups with your hands up on a bench or bar — easier than the floor."},
+    {name:"Run / walk",dose:"15 min",what:"Easy jogging broken up with walking to build your running base.",note:"Jog 1 min / walk 2 min"}]},
   B:{nm:"Squat + Intervals",tag:"Legs · interval running",totals:{pullups:0,pushups:0,squats:45,mile:0},ex:[
-    {name:"Goblet squat",dose:"3 × 10",w:{def:25,step:5}},
-    {name:"Bodyweight squats",dose:"3 × 15",note:"Hip crease below the knee"},
-    {name:"Walking lunges",dose:"2 × 10 / leg"},
-    {name:"DB Romanian deadlift",dose:"2 × 10",w:{def:30,step:5}},
-    {name:"Run / walk intervals",dose:"12–15 min",note:"Jog 1 min / walk 1–2 min"},
-    {name:"Plank",dose:"3 × 20–30s"}]},
+    {name:"Goblet squat",dose:"3 × 10",what:"Squat while holding one dumbbell against your chest.",w:{def:25,step:5}},
+    {name:"Bodyweight squats",dose:"3 × 15",what:"Plain air squats, no weight — the exact squat Murph asks for.",note:"Hip crease below the knee"},
+    {name:"Walking lunges",dose:"2 × 10 / leg",what:"Step forward into a lunge, alternating legs as you walk."},
+    {name:"DB Romanian deadlift",dose:"2 × 10",what:"Hinge at the hips, sliding dumbbells down your legs — hamstrings and back.",w:{def:30,step:5}},
+    {name:"Run / walk intervals",dose:"12–15 min",what:"Short jog/walk repeats to build running fitness.",note:"Jog 1 min / walk 1–2 min"},
+    {name:"Plank",dose:"3 × 20–30s",what:"Hold a straight body on forearms and toes — core work."}]},
   C:{nm:"Push + Pull",tag:"Pressing · more pulling volume",totals:{pullups:0,pushups:0,squats:0,mile:0},ex:[
-    {name:"DB bench press (or incline push-ups)",dose:"3 × 8–10",w:{def:30,step:5}},
-    {name:"Band-assisted pull-ups",dose:"3 × 5–8",note:"A band that lets you do clean reps"},
-    {name:"Inverted row (barbell/TRX)",dose:"3 × 10"},
-    {name:"Incline / knee push-ups",dose:"3 × clean",note:"Leave 2 in the tank"},
-    {name:"Overhead DB press",dose:"2 × 10",w:{def:20,step:5}}]},
+    {name:"DB bench press (or incline push-ups)",dose:"3 × 8–10",what:"Lying on a bench, press dumbbells up off your chest.",w:{def:30,step:5}},
+    {name:"Band-assisted pull-ups",dose:"3 × 5–8",what:"Pull-ups with a band under your feet carrying some of your weight.",note:"A band that lets you do clean reps"},
+    {name:"Inverted row (barbell/TRX)",dose:"3 × 10",what:"Lie under a bar and pull your chest up to it, body straight."},
+    {name:"Incline / knee push-ups",dose:"3 × clean",what:"Push-ups made easier — hands raised, or knees on the floor.",note:"Leave 2 in the tank"},
+    {name:"Overhead DB press",dose:"2 × 10",what:"Press dumbbells from your shoulders straight overhead.",w:{def:20,step:5}}]},
   D:{nm:"Mixed conditioning",tag:"A first taste of Murph",totals:{pullups:0,pushups:0,squats:50,mile:0},ex:[
-    {name:"Easy jog",dose:"5 min"},
-    {name:"Circuit — unhurried",dose:"5 rounds",note:"2 assisted pull-ups · 5 incline push-ups · 10 squats"},
-    {name:"Continuous jog",dose:"0.5 → 0.75 mi",note:"Walk when needed; nudge the distance up"}]}
+    {name:"Easy jog",dose:"5 min",what:"Gentle warm-up jog to loosen up."},
+    {name:"Circuit — unhurried",dose:"5 rounds",what:"Murph's three moves in miniature — repeat the round, no rush.",note:"2 assisted pull-ups · 5 incline push-ups · 10 squats"},
+    {name:"Continuous jog",dose:"0.5 → 0.75 mi",what:"Keep jogging without stopping for as long as you can.",note:"Walk when needed; nudge the distance up"}]}
 };
 const ORDER=["A","B","C","D"];
 const PHASE1_SESSIONS=16;
@@ -929,7 +952,7 @@ function renderNext(){
   const dl=deloadActive();
   let rows=w.ex.map(e=>{
     const dose=e.w ? (e.dose+' · '+dlWeight(e)+' lb'+(dl?' <span class="deload-tag">deload</span>':'')) : e.dose;
-    return '<div class="ex"><div class="row"><span class="name">'+e.name+'</span><span class="dose">'+dose+'</span></div>'+(e.note?'<div class="note">'+e.note+'</div>':'')+'</div>';
+    return '<div class="ex"><div class="row"><span class="name">'+e.name+'</span><span class="dose">'+dose+'</span></div>'+(e.what?'<div class="what">'+e.what+'</div>':'')+(e.note?'<div class="note">'+e.note+'</div>':'')+'</div>';
   }).join("");
   $("next-card").className="next fade-in";
   $("next-card").innerHTML='<div class="next-head"><div class="letter">'+day+'</div><div class="t"><div class="nm">'+w.nm+'</div><div class="tag">'+w.tag+'</div></div></div><div class="ex-list">'+rows+'</div>';
@@ -979,13 +1002,45 @@ function renderProgress(){
   setTimeout(()=>{$("bar").style.width=Math.min(done,PHASE1_SESSIONS)/PHASE1_SESSIONS*100+"%";},50);
 }
 
+// Expanded view of one logged session: the workout as prescribed that day (with the weight
+// actually used per lift) plus the feedback entered. Weights are the only per-session record of
+// what he lifted; the rest of the prescription comes from the plan for that day.
+function histDetail(c){
+  const w=PHASE1[c.day];
+  if(!w) return '<div class="hist-detail"><div class="hd-none">This day\'s workout is no longer in the plan.</div></div>';
+  const used=c.weights||{};
+  const rows=w.ex.map(e=>{
+    const lb = used[e.name]!=null ? ' · '+used[e.name]+' lb' : '';
+    return '<div class="hd-ex"><span class="hd-n">'+e.name.replace(/</g,"&lt;")+'</span>'+
+           '<span class="hd-d">'+e.dose.replace(/</g,"&lt;")+lb+'</span></div>';
+  }).join("");
+  return '<div class="hist-detail">'+
+    '<div class="hd-h">The workout · Day '+c.day+' — '+w.nm+'</div>'+rows+
+    '<div class="hd-h">Your feedback</div>'+
+    '<div class="hd-fb">Difficulty <b>'+c.difficulty+' / 10</b></div>'+
+    '<div class="hd-fb">'+(c.notes ? '“'+c.notes.replace(/</g,"&lt;")+'”' : '<span class="hd-none">No notes entered.</span>')+'</div>'+
+  '</div>';
+}
 function renderHist(){
   const h=$("hist");
   if(!state.completed.length){h.innerHTML='<div class="empty">No sessions logged yet — your first one starts the streak.</div>';return;}
   h.innerHTML=[...state.completed].reverse().map(c=>{
     const wLine=c.weights?'<div class="l2 wtline">'+Object.entries(c.weights).map(([n,w])=>n.replace(/</g,"&lt;")+' '+w+'lb').join(' · ')+'</div>':'';
-    return '<div class="entry"><div class="badge">'+c.day+'</div><div class="info"><div class="l1">#'+c.session+' · '+PHASE1[c.day].nm+'</div><div class="l2">'+fmtDate(c.date)+(c.notes?' · '+c.notes.replace(/</g,"&lt;"):'')+'</div>'+wLine+'</div><div class="d" style="background:'+diffColor(c.difficulty)+'">'+c.difficulty+'/10</div></div>';
+    return '<div class="entry" data-session="'+c.session+'">'+
+      '<div class="entry-main" role="button" tabindex="0" aria-expanded="false">'+
+        '<div class="badge">'+c.day+'</div>'+
+        '<div class="info"><div class="l1">#'+c.session+' · '+PHASE1[c.day].nm+'</div>'+
+        '<div class="l2">'+fmtDate(c.date)+(c.notes?' · '+c.notes.replace(/</g,"&lt;"):'')+'</div>'+wLine+'</div>'+
+        '<div class="d" style="background:'+diffColor(c.difficulty)+'">'+c.difficulty+'/10</div>'+
+        '<div class="chev">▾</div>'+
+      '</div>'+ histDetail(c) +'</div>';
   }).join("");
+  h.querySelectorAll(".entry-main").forEach(m=>{
+    const open=()=>{ const e=m.closest(".entry"); const now=e.classList.toggle("open");
+      m.setAttribute("aria-expanded", now?"true":"false"); };
+    m.onclick=open;
+    m.onkeydown=ev=>{ if(ev.key==="Enter"||ev.key===" "){ ev.preventDefault(); open(); } };
+  });
 }
 
 function renderSupps(){
@@ -1183,37 +1238,65 @@ function benchTotals(b){
   return {pullups:b.pullups||0, pushups:b.pushups||0, squats:b.squats||0, mile:b.mileSec!=null?1:0};
 }
 function meetsNeed(totals,need){ return Object.keys(need).every(k=>(totals[k]||0)>=need[k]); }
-// Earliest date this milestone was earned, or null. Manual ones read state.milestones.
-function msEarned(m){
+const MS_ALL = MS_TIERS.reduce((a,t)=>a.concat(t.items),[]);
+function msById(id){ return MS_ALL.find(m=>m.id===id); }
+// What the data says, ignoring any manual override: earliest date earned, or null.
+function msDerived(m){
   if(m.auto) return m.auto(state) ? ((m.autoDate&&m.autoDate(state))||true) : null;
-  if(!m.need) return (state.milestones||{})[m.id]||null;
+  if(!m.need) return null;                       // `big` finishers are manual by design
   let best=null;
   const take=k=>{ if(k&&(!best||k<best)) best=k; };
   (state.completed||[]).forEach(c=>{ if(meetsNeed(dayTotals(c),m.need)) take(iso(new Date(c.date))); });
   (state.benchmarks||[]).forEach(b=>{ if(meetsNeed(benchTotals(b),m.need)) take(b.date); });
   return best;
 }
+// What we actually show. state.milestones[id] is the manual override:
+//   a date string = forced on, false = forced off, absent = follow the data.
+function msEarned(m){
+  const ov=(state.milestones||{})[m.id];
+  if(ov===false) return null;
+  if(typeof ov==="string") return ov;
+  return msDerived(m);
+}
+// True when the override disagrees with the data — worth flagging in the UI so a hand-ticked
+// milestone is never mistaken for one Luke actually earned.
+function msOverridden(m){
+  const ov=(state.milestones||{})[m.id];
+  if(ov===undefined) return false;
+  if(ov===false) return !!msDerived(m);
+  return !m.big && !msDerived(m);
+}
+// Toggling only stores an override when it contradicts the data — so re-ticking something the
+// data already supports drops the override and lets it track the data again.
+function msToggle(id){
+  const m=msById(id); if(!m) return;
+  if(!state.milestones) state.milestones={};
+  const derived=msDerived(m);
+  if(msEarned(m)){
+    if(derived) state.milestones[id]=false; else delete state.milestones[id];
+  }else{
+    if(derived) delete state.milestones[id]; else state.milestones[id]=todayKey();
+  }
+}
 function renderMilestones(){
   const el=$("milestones"); if(!el) return;
   el.innerHTML=MS_TIERS.map(tier=>{
     const cards=tier.items.map(m=>{
-      const date=msEarned(m), done=!!date, tap=!m.auto&&!m.need;
-      return '<div class="ms-card'+(done?' done':'')+(tap?' tap':'')+(m.tgt?' tgt':'')+(m.big?' big':'')+'"'+
-        (tap?' role="button" tabindex="0"':'')+' data-id="'+m.id+'">'+
+      const date=msEarned(m), done=!!date, ov=msOverridden(m);
+      const sub = ov ? (done?'marked by hand':'cleared by hand')
+                     : (done&&typeof date==="string" ? fmtDate(date) : m.sub);
+      return '<div class="ms-card'+(done?' done':'')+' tap'+(ov?' ov':'')+(m.tgt?' tgt':'')+(m.big?' big':'')+'"'+
+        ' role="button" tabindex="0" aria-pressed="'+(done?'true':'false')+'" data-id="'+m.id+'">'+
         '<div class="ms-check">'+(done?'✓':'')+'</div>'+
         '<div class="ms-body"><div class="ms-label">'+m.icon+' '+m.label+'</div>'+
-        '<div class="ms-sub2">'+(done&&typeof date==="string"?fmtDate(date):m.sub)+'</div></div></div>';
+        '<div class="ms-sub2">'+sub+'</div></div></div>';
     }).join("");
     const n=tier.items.filter(m=>!!msEarned(m)).length;
     return '<div class="ms-tier"><div class="ms-tier-h"><span>'+tier.label+'</span>'+
       '<span class="ms-tier-n">'+n+'/'+tier.items.length+'</span></div>'+
       '<div class="ms-grid">'+cards+'</div></div>';
   }).join("");
-  const toggle=async id=>{
-    if(!state.milestones) state.milestones={};
-    if(state.milestones[id]) delete state.milestones[id]; else state.milestones[id]=todayKey();
-    renderMilestones(); await save();
-  };
+  const toggle=async id=>{ msToggle(id); renderMilestones(); await save(); };
   el.querySelectorAll(".ms-card.tap").forEach(card=>{
     card.onclick=()=>toggle(card.dataset.id);
     card.onkeydown=e=>{ if(e.key==="Enter"||e.key===" "){ e.preventDefault(); toggle(card.dataset.id); } };
@@ -1383,7 +1466,7 @@ $("reset").onclick=async()=>{
   resetInputs();render();$("copy-panel").classList.remove("show");await save();
 };
 $("copy").onclick=async()=>{
-  let txt="Murph Phase 1 — "+nameFor((user&&user.email||"").toLowerCase())+"'s session log:\n";
+  let txt="Murph Tracker — "+nameFor((user&&user.email||"").toLowerCase())+"'s session log:\n";
   if(state.bodyweight>0){ const rg=proteinRange(); txt+="Bodyweight: "+state.bodyweight+" lb · protein target ~"+proteinGoal()+" g/day (range "+rg[0]+"–"+rg[1]+")\n"; }
   if(state.completed.length){
     state.completed.forEach(c=>{
