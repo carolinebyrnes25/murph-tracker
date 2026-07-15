@@ -36,6 +36,20 @@ there is nothing in `settings.json` to switch off. So after editing `index.html`
 Do that yourself; do not leave the user staring at the `file://` tab and do not ask
 them to check the URL. If the pane "isn't rendering", this is almost always why.
 
+## Goal inputs (the "Inputs" tab — formerly "Reminders")
+
+The Inputs page (`view-inputs`) collects the profile values the app personalizes around:
+- `state.murphDate` — `"YYYY-MM-DD"` target date. Replaces the old hardcoded `MURPH_DATE`;
+  drives the Progress countdown. `murphDate()` / `parseYMD()` parse it as a local date.
+- `state.daysPerWeek` — 1–7 weekly training cadence. Feeds `paceInfo()` (is the date
+  realistic? how many weeks per phase?) and the push sender's rest-day threshold
+  (`reminder-sender/send.js`, `u.daysPerWeek`, replacing the old hardcoded 4).
+- `state.bodyweight` — single value (no longer entered daily). Powers `proteinGoal()`.
+
+Both new fields persist top-level in the Firestore doc so `send.js` can read them.
+`onboardingIncomplete()` (missing date, days/week, or weight) routes first-time users to
+the Inputs page on boot. The bodyweight trend chart and `weightLog` were removed.
+
 ## Supplements model
 
 `state.supps[dateKey]` = `{ creatine?: number, protein?: number }`.
