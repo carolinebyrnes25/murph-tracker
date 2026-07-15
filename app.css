@@ -59,6 +59,9 @@
   .wchart .warea{fill:var(--olive-2);opacity:.12;stroke:none;}
   .wchart .grid{stroke:var(--line);stroke-width:1;}
   .wchart .ax{font-family:"IBM Plex Mono",monospace;font-size:11px;fill:var(--soft);}
+  /* axis titles — say what is being measured, so a chart never needs a caption to be read */
+  .wchart .axt{font-family:"Inter",sans-serif;font-size:11px;font-weight:600;fill:var(--olive);
+    letter-spacing:.02em;}
   /* NB: chart bars are .cbar, NOT .bar — `.bar` is the workout progress bar (height:7px), and in
      SVG2 that CSS height overrides a <rect>'s height attribute, flattening every bar to a line. */
   .cbar{fill:var(--olive-2);}
@@ -140,6 +143,9 @@
   .rem-label{display:block;font-family:"IBM Plex Mono",monospace;font-size:.68rem;letter-spacing:.1em;
     text-transform:uppercase;color:var(--soft);margin-bottom:8px;}
   .rem-days{display:flex;gap:6px;}
+  /* captions sitting under an input need breathing room — .supp-caption carries a negative top
+     margin for its own card, which jams it against the pills here. */
+  .rem-field .supp-caption{margin-top:11px;line-height:1.5;}
   .rem-day{flex:1;aspect-ratio:1;max-width:46px;border:1px solid var(--line);background:var(--paper);
     border-radius:9px;font-family:"IBM Plex Mono",monospace;font-size:.85rem;color:var(--soft);cursor:pointer;padding:0;}
   .rem-day.sel{background:var(--olive);color:#fff;border-color:transparent;font-weight:600;}

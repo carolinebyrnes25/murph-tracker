@@ -31,14 +31,15 @@ export function renderSupps(){
   const pbtn=$("protein-btn"); const hadShake=t.protein!=null;
   if(hadShake){pbtn.classList.add("on");pbtn.textContent="✓ Shake had ("+SHAKE_G+"g)";}
   else{pbtn.classList.remove("on");pbtn.textContent="Tap when you've had a shake ("+SHAKE_G+"g)";}
-  // protein caption: shake status + daily target derived from weight (set on the Inputs page)
+  // Protein caption. The button already says "tap when you've had a shake" — don't repeat it here;
+  // this line is only for the daily target and what's been logged.
   const goal=proteinGoal(); const cap=$("protein-caption");
   const when=isToday?"today":fmtDate(tk);
   cap.className="supp-caption"+(hadShake?" hit":"");
   if(hadShake){
     cap.innerHTML="Shake logged "+when+" — <b>"+SHAKE_G+" g protein</b>"+(goal?" · daily target ~"+goal+" g":"");
   }else if(goal){
-    cap.innerHTML="Tap above when you've had your shake ("+SHAKE_G+" g) · daily target ~<b>"+goal+" g</b>";
+    cap.innerHTML="Daily target ~<b>"+goal+" g</b> protein.";
   }else{
     cap.innerHTML="Add your weight on the <b>Inputs</b> page to get a daily protein target.";
   }

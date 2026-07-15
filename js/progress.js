@@ -148,20 +148,26 @@ export function renderConsistency(){
     '<div class="stat"><div class="n">'+state.completed.length+'</div><div class="l">Total sessions</div></div>'+
     '<div class="stat"><div class="n">'+thisWk+'</div><div class="l">This week</div></div>'+
     '<div class="stat"><div class="n">'+best+'</div><div class="l">Best week</div></div></div>';
-  svgBars($("weekly-chart"), weeklyCounts(8));
+  svgBars($("weekly-chart"), weeklyCounts(8), {yLabel:"Sessions logged", xLabel:"Week beginning (Sunday)"});
 }
 export function renderDifficultyChart(){
   const el=$("difficulty-chart"); if(!el) return;
   const pts=state.completed.map(c=>({label:'#'+c.session,y:c.difficulty}));
   const avg=pts.length?pts.reduce((s,p)=>s+p.y,0)/pts.length:null;
-  svgLine(el, pts, {yMin:1,yMax:10,avg,fmt:v=>Math.round(v*10)/10,empty:"Log a couple more sessions to see your effort trend."});
+  svgLine(el, pts, {yMin:1,yMax:10,avg,fmt:v=>Math.round(v*10)/10,
+    yLabel:"Difficulty you rated (1–10)", xLabel:"Session",
+    empty:"Log a couple more sessions to see your effort trend.",
+    oneMore:"Log another session to see your effort trend."});
 }
 export function renderStrengthChart(){
   const ctr=$("strength-controls"); if(!ctr) return;
   ctr.innerHTML=WEIGHTED_LIFTS.map(n=>'<button data-l="'+n.replace(/"/g,'')+'" class="'+(n===selectedLift?'sel':'')+'">'+shortName(n)+'</button>').join("");
   ctr.querySelectorAll("button").forEach(b=>{ b.onclick=()=>{ selectedLift=b.getAttribute("data-l"); renderStrengthChart(); }; });
   const pts=state.completed.filter(c=>c.weights&&c.weights[selectedLift]!=null).map(c=>({label:fmtDate(c.date),y:c.weights[selectedLift]}));
-  svgLine($("strength-chart"), pts, {unit:" lb",fmt:v=>Math.round(v),empty:"No "+shortName(selectedLift)+" logged yet."});
+  svgLine($("strength-chart"), pts, {unit:" lb",fmt:v=>Math.round(v),
+    yLabel:"Working weight (lb)", xLabel:"Session date",
+    empty:"No "+shortName(selectedLift)+" logged yet.",
+    oneMore:"Log another session with this lift to see the trend."});
 }
 export const BENCH_METRICS=[
   {id:"pullups",label:"Pull-ups"},
@@ -193,9 +199,11 @@ export function renderBenchmarks(){
   const pts=list.filter(t=>t[benchMetric]!=null).map(t=>({label:fmtDate(t.date),y:t[benchMetric]}));
   const lbl=met.label.toLowerCase();
   svgLine($("bench-chart"), pts, met.time
-    ? {fmt:fmtMile, unit:"", empty:"No mile time logged yet.",
+    ? {fmt:fmtMile, unit:"", yLabel:"1-mile time (mm:ss)", xLabel:"Test date",
+       empty:"No mile time logged yet.",
        oneMore:"Log another mile time to see your pace trend — this line should fall over time."}
-    : {fmt:v=>Math.round(v), empty:"No "+lbl+" logged yet.",
+    : {fmt:v=>Math.round(v), yLabel:"Max "+lbl+" in one test", xLabel:"Test date",
+       empty:"No "+lbl+" logged yet.",
        oneMore:"Log another test to see your "+lbl+" trend — this line should climb over time."});
 }
 $("bench-log-btn").onclick=()=>{ const f=$("bench-form"); f.hidden=!f.hidden; if(!f.hidden && !$("bf-date").value) $("bf-date").value=todayKey(); };

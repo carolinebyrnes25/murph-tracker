@@ -13,7 +13,8 @@ export function svgLine(el, pts, opts){
       '<div class="one-pt-n">'+(opts.oneMore||"Log another to see a trend line.")+'</div></div>';
     return;
   }
-  const W=520,H=200,L=38,R=14,T=14,B=28;
+  // L/B leave room for the axis titles; without them a reader has to guess what's being measured.
+  const W=520,H=214,L=56,R=14,T=14,B=44;
   const ys=pts.map(p=>p.y);
   let lo=opts.yMin!=null?opts.yMin:Math.min(...ys), hi=opts.yMax!=null?opts.yMax:Math.max(...ys);
   if(lo===hi){lo-=1;hi+=1;} else if(opts.yMin==null&&opts.yMax==null){const pad=(hi-lo)*0.15;lo-=pad;hi+=pad;}
@@ -25,19 +26,24 @@ export function svgLine(el, pts, opts){
   const dots=pts.map((p,i)=>'<circle cx="'+x(i).toFixed(1)+'" cy="'+y(p.y).toFixed(1)+'" r="3" fill="var(--olive)"><title>'+p.label+': '+fmt(p.y)+(opts.unit||'')+'</title></circle>').join("");
   let avg="";
   if(opts.avg!=null){ const ay=y(opts.avg); avg='<line x1="'+L+'" y1="'+ay.toFixed(1)+'" x2="'+(W-R)+'" y2="'+ay.toFixed(1)+'" class="avgline"/><text x="'+(W-R)+'" y="'+(ay-4).toFixed(1)+'" text-anchor="end" class="ax">avg '+fmt(opts.avg)+'</text>'; }
+  const midY=T+(H-T-B)/2, midX=L+(W-L-R)/2;
+  const yTitle=opts.yLabel ? '<text transform="rotate(-90 14 '+midY.toFixed(1)+')" x="14" y="'+midY.toFixed(1)+'" text-anchor="middle" class="axt">'+opts.yLabel+'</text>' : '';
+  const xTitle=opts.xLabel ? '<text x="'+midX.toFixed(1)+'" y="'+(H-2)+'" text-anchor="middle" class="axt">'+opts.xLabel+'</text>' : '';
   el.innerHTML='<svg viewBox="0 0 '+W+' '+H+'" class="wchart" role="img">'+
     '<line x1="'+L+'" y1="'+(H-B)+'" x2="'+(W-R)+'" y2="'+(H-B)+'" class="grid"/>'+
+    '<line x1="'+L+'" y1="'+T+'" x2="'+L+'" y2="'+(H-B)+'" class="grid"/>'+
     '<path d="'+area+'" class="warea"/><path d="'+line+'" class="wline"/>'+avg+dots+
     '<text x="'+(L-6)+'" y="'+(T+4)+'" text-anchor="end" class="ax">'+fmt(hi)+'</text>'+
     '<text x="'+(L-6)+'" y="'+(H-B)+'" text-anchor="end" class="ax">'+fmt(lo)+'</text>'+
-    '<text x="'+L+'" y="'+(H-9)+'" text-anchor="start" class="ax">'+pts[0].label+'</text>'+
-    '<text x="'+(W-R)+'" y="'+(H-9)+'" text-anchor="end" class="ax">'+pts[pts.length-1].label+'</text>'+
+    '<text x="'+L+'" y="'+(H-B+14)+'" text-anchor="start" class="ax">'+pts[0].label+'</text>'+
+    '<text x="'+(W-R)+'" y="'+(H-B+14)+'" text-anchor="end" class="ax">'+pts[pts.length-1].label+'</text>'+
+    yTitle+xTitle+
   '</svg>';
 }
 export function svgBars(el, data, opts){
   opts=opts||{};
   if(!data.length){ el.innerHTML='<p class="chart-empty">No sessions logged yet.</p>'; return; }
-  const W=520,H=180,L=20,R=12,T=16,B=26;
+  const W=520,H=196,L=46,R=12,T=16,B=44;
   const hi=Math.max(1, ...data.map(d=>d.value));
   const n=data.length, slot=(W-L-R)/n, bw=slot*0.6;
   const y=v=>T+(H-T-B)*(1-v/hi);
@@ -45,9 +51,18 @@ export function svgBars(el, data, opts){
     const cx=L+slot*i+slot/2, x=cx-bw/2, yy=y(d.value), h=(H-B)-yy;
     const val=d.value>0?'<text x="'+cx.toFixed(1)+'" y="'+(yy-5).toFixed(1)+'" text-anchor="middle" class="barval">'+d.value+'</text>':'';
     return '<rect x="'+x.toFixed(1)+'" y="'+yy.toFixed(1)+'" width="'+bw.toFixed(1)+'" height="'+Math.max(0,h).toFixed(1)+'" rx="4" class="cbar"><title>Week of '+d.label+': '+d.value+' session'+(d.value===1?'':'s')+'</title></rect>'+val+
-      '<text x="'+cx.toFixed(1)+'" y="'+(H-9)+'" text-anchor="middle" class="ax">'+d.label+'</text>';
+      '<text x="'+cx.toFixed(1)+'" y="'+(H-B+14)+'" text-anchor="middle" class="ax">'+d.label+'</text>';
   }).join("");
-  el.innerHTML='<svg viewBox="0 0 '+W+' '+H+'" class="wchart" role="img"><line x1="'+L+'" y1="'+(H-B)+'" x2="'+(W-R)+'" y2="'+(H-B)+'" class="grid"/>'+bars+'</svg>';
+  const midY=T+(H-T-B)/2, midX=L+(W-L-R)/2;
+  const yTitle=opts.yLabel ? '<text transform="rotate(-90 14 '+midY.toFixed(1)+')" x="14" y="'+midY.toFixed(1)+'" text-anchor="middle" class="axt">'+opts.yLabel+'</text>' : '';
+  const xTitle=opts.xLabel ? '<text x="'+midX.toFixed(1)+'" y="'+(H-2)+'" text-anchor="middle" class="axt">'+opts.xLabel+'</text>' : '';
+  // y ticks: 0 and the max, so the bar heights are readable as a count
+  const ticks='<text x="'+(L-6)+'" y="'+(T+4)+'" text-anchor="end" class="ax">'+hi+'</text>'+
+              '<text x="'+(L-6)+'" y="'+(H-B)+'" text-anchor="end" class="ax">0</text>';
+  el.innerHTML='<svg viewBox="0 0 '+W+' '+H+'" class="wchart" role="img">'+
+    '<line x1="'+L+'" y1="'+(H-B)+'" x2="'+(W-R)+'" y2="'+(H-B)+'" class="grid"/>'+
+    '<line x1="'+L+'" y1="'+T+'" x2="'+L+'" y2="'+(H-B)+'" class="grid"/>'+
+    bars+ticks+yTitle+xTitle+'</svg>';
 }
 // --- data helpers ---
 export function weekStart(d){ const x=new Date(d); x.setHours(0,0,0,0); x.setDate(x.getDate()-x.getDay()); return x; } // Sunday
