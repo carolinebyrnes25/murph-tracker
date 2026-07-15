@@ -1,6 +1,6 @@
 import { setDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import { CACHE_KEY, DEV, DEV_KEY, PROGRAM_SESSIONS } from "./config.js";
-import { nameFor, parseYMD } from "./util.js";
+import { iso, nameFor, parseYMD } from "./util.js";
 
 export let state={completed:[],supps:{}};
 export let user=null;
@@ -42,7 +42,10 @@ export function actualPace(){
   const md=murphDate(), dpw=state.daysPerWeek, done=(state.completed||[]).length;
   if(!md || !(dpw>0)) return null;
   if(!done) return {status:"none", dpw};
-  const remaining=Math.max(0, PROGRAM_SESSIONS-done);
+  // Sessions LEFT come from the plan position (credits for easy sessions genuinely remove work),
+  // but the RATE comes from sessions he actually did. Mixing these up would let credits inflate
+  // his apparent training rate — which would be a lie.
+  const remaining=Math.max(0, PROGRAM_SESSIONS-planPos());
   if(!remaining) return {status:"done"};
   const today=new Date(); today.setHours(0,0,0,0);
   const first=new Date(state.completed.map(c=>c.date).sort()[0]); first.setHours(0,0,0,0);
@@ -51,7 +54,12 @@ export function actualPace(){
   const rate=done/(days/7);                                  // real sessions per week
   const finish=new Date(today.getTime()+Math.ceil(remaining/rate)*7*86400000);
   const weeksLate=Math.round((finish-md)/(7*86400000));
-  return {status: finish<=md ? "on" : "behind", rate, finish, weeksLate, dpw, remaining,
+  const aheadWeeks=Math.floor((md-finish)/(7*86400000));
+  const credit=(state.accel&&state.accel.credit)||0;
+  return {status: finish<=md ? "on" : "behind", rate, finish, weeksLate, dpw, remaining, credit,
+          aheadWeeks,
+          // Only offer to pull the date in when the gap is big enough to be real rather than noise.
+          suggestDate: (finish<=md && aheadWeeks>=3) ? iso(finish) : null,
           needRate: Math.min(7, Math.ceil(remaining/Math.max(0.1,(md-today)/(7*86400000)))) };
 }
 export function onboardingIncomplete(){ return !state.name || !state.gender || !state.murphDate || !(state.daysPerWeek>0) || !(state.bodyweight>0); }
@@ -64,6 +72,8 @@ export function normalizeState(){
   if(typeof state.recoveryDue!=="boolean") state.recoveryDue=false;
   if(state.recoveryReason===undefined) state.recoveryReason=null;
   if(!state.deload) state.deload={active:false,left:0,cooldown:0};
+  if(!state.accel) state.accel={credit:0,cooldown:0,log:[]};
+  if(!Array.isArray(state.accel.log)) state.accel.log=[];
   if(!state.milestones) state.milestones={};
   if(!state.benchmarks) state.benchmarks=[];
   // Goal inputs (set on the Inputs page): target date + weekly training cadence.
@@ -80,6 +90,37 @@ export function dlWeight(e){
   const base=exWeight(e);
   if(deloadActive()) return Math.max(e.w.step, Math.round(base*0.85/e.w.step)*e.w.step);
   return base;
+}
+/* ---------------- Adaptive progression ----------------
+   Deload's mirror image. Three hard sessions in a row earn a lighter block; three EASY ones in a
+   row earn a jump forward — the plan advances by an extra session, so he moves through the phases
+   faster than the calendar says and his finish date pulls in.
+
+   `planPos()` is where he is IN THE PLAN (sessions done + credits). It is deliberately NOT the same
+   as completed.length, which stays the count of workouts he actually did: the pace projection needs
+   the real rate from real sessions, but the sessions REMAINING come from the plan position. Use
+   planPos() for "which day/phase/session is next", completed.length for "how much has he trained".  */
+const EASY_MAX=4;         // 1-10 self-rating; <=4 is "this was easy"
+const ACCEL_WINDOW=3;     // consecutive easy sessions needed (same window as deload's hard streak)
+const ACCEL_COOLDOWN=3;   // sessions before another jump can be earned — no runaway skipping
+const ACCEL_CAP_FRAC=0.25;// never let credits skip more than a quarter of the program
+
+export function planPos(){ return (state.completed||[]).length + ((state.accel&&state.accel.credit)||0); }
+
+// Call AFTER pushing the session. Returns the new credit total if a jump was earned, else null.
+export function updateAccelAfterSession(hadPain){
+  const a=state.accel||(state.accel={credit:0,cooldown:0,log:[]});
+  if(a.cooldown>0){ a.cooldown--; return null; }
+  if(deloadActive()) return null;                 // never skip ahead while backing off
+  if(hadPain) return null;                        // pain outranks "easy" every time
+  const last=(state.completed||[]).slice(-ACCEL_WINDOW);
+  if(last.length<ACCEL_WINDOW) return null;
+  if(!last.every(s=>s.difficulty<=EASY_MAX)) return null;
+  if(planPos()>=PROGRAM_SESSIONS) return null;    // nothing left to skip into
+  if(a.credit>=Math.floor(PROGRAM_SESSIONS*ACCEL_CAP_FRAC)) return null;
+  a.credit++; a.cooldown=ACCEL_COOLDOWN;
+  a.log.push({at:(state.completed||[]).length, date:new Date().toISOString()});
+  return a.credit;
 }
 export function updateDeloadAfterSession(){
   const dl=state.deload||(state.deload={active:false,left:0,cooldown:0});
