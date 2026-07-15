@@ -1,7 +1,43 @@
 # Murph Tracker — notes for Claude
 
-Single-file web app: `index.html` holds all markup, CSS, and JS (an ES module).
+Vanilla web app, no build step — GitHub Pages serves these files as-is.
 State lives in `state` and persists to Firebase (Firestore) in prod, `localStorage` in dev.
+
+## Layout — work in the ONE file your feature owns
+
+```
+index.html      markup only
+app.css         all styles
+js/config.js    firebase config, constants, DEV detection   (imports nothing)
+js/plan.js      PHASE1 workout data + per-day `totals`      (imports nothing)
+js/util.js      $, date/format helpers
+js/firebase.js  fbApp / auth / db / provider
+js/store.js     `state`, save(), derived helpers, setters, renderAll hook
+js/auth.js      sign-in, dev boot, loading the user doc
+js/nav.js       drawer + showView
+js/charts.js    generic svgLine / svgBars
+js/workout.js   next workout, weights, coach note, logging a session
+js/supps.js     creatine + protein shake
+js/history.js   history list + expandable detail, copy/undo/reset
+js/progress.js  countdown, milestones, benchmarks, charts
+js/inputs.js    goal inputs + reminders
+js/app.js       render() + boot
+```
+
+This split exists so **parallel sessions don't collide** — a milestones change and a
+reminders change now touch different files. Keep it that way: put a feature's code in its
+own module rather than growing `app.js` or `store.js`.
+
+Two rules the module graph depends on (see `js/store.js`):
+- **`state`/`user`/`userRef`/`ready` are owned by `store.js`.** ES modules give importers a
+  live *read* binding but only the owner may reassign, so use `setState()` / `setUser()` /
+  `setUserRef()` / `setReady()` from other modules — a bare `state = …` will not compile.
+- **Never import `app.js` from a feature module** — `app.js` imports the features, so that
+  would cycle. To trigger a full repaint, call `renderAll()` from `store.js`; `app.js`
+  registers the real `render()` via `setRenderAll()` before boot.
+
+The dependency graph is acyclic: `config`/`plan` import nothing; features import
+`config`/`util`/`plan`/`store`/`charts`/`nav`; only `app.js` imports features.
 
 ## Testing / verification
 
