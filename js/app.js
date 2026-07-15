@@ -1,7 +1,8 @@
 import { DEV } from "./config.js";
 import { auth } from "./firebase.js";
 import { $ } from "./util.js";
-import { myName, ready, setRenderAll, user } from "./store.js";
+import { myName, onboardingIncomplete, ready, setRenderAll, user } from "./store.js";
+import { setNavLocked } from "./nav.js";
 import { devInit, handleRedirectResult, initAuth, showOverlay } from "./auth.js";
 import { buildDiff, renderBanner, renderCoachNote, renderNext, renderProgress, renderRecovery, renderWeights } from "./workout.js";
 import { renderSupps } from "./supps.js";
@@ -11,6 +12,9 @@ import { renderInputs, renderReminders } from "./inputs.js";
 
 export function render(){
   if(!ready) return;
+  // Re-evaluated on every repaint, so the gate lifts the moment the profile is complete and
+  // re-arms for an existing user who signed in before these fields existed.
+  setNavLocked(onboardingIncomplete());
   if(user && !DEV) $("who").textContent=myName();   // reflect the chosen name in the drawer
   renderRecovery();renderProgress();renderNext();renderWeights();renderHist();renderSupps();renderBanner();renderProgressDash();renderInputs();renderReminders();renderCoachNote();
 }

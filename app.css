@@ -36,6 +36,13 @@
     border-left:3px solid transparent;}
   .nav-item:hover{background:var(--band);}
   .nav-item.active{color:var(--olive);border-left-color:var(--olive);background:var(--band);}
+  /* onboarding gate: these stay visible (so the app's shape is obvious) but are clearly off */
+  .nav-item.locked{opacity:.38;cursor:not-allowed;}
+  .nav-item.locked:hover{background:none;}
+  .nav-lock-note{margin:2px 22px 0;font-size:.74rem;line-height:1.45;color:var(--soft);}
+  .nav-lock-note b{color:var(--olive);}
+  /* a field the gate is still waiting on */
+  .needs{outline:2px solid var(--flag);outline-offset:2px;border-radius:10px;}
   .drawer-foot{padding:14px 22px 4px;border-top:1px solid var(--line);display:flex;flex-direction:column;
     gap:10px;font-family:"IBM Plex Mono",monospace;font-size:.72rem;color:var(--soft);}
   .drawer-foot b{color:var(--olive);}

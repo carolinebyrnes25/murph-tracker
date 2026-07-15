@@ -133,7 +133,27 @@ $("goal-save").onclick=async()=>{
   const d=$("murph-date-in").value; state.murphDate = /^\d{4}-\d{2}-\d{2}$/.test(d) ? d : null;
   state.daysPerWeek = dpwSelected();
   const w=parseInt($("weight-in").value,10); state.bodyweight = (!isNaN(w)&&w>0) ? w : null;
+  // Save whatever is filled in first — a half-finished profile shouldn't be lost on reload —
+  // then say what's still needed. The nav gate (setNavLocked in render) does the enforcing.
   await save();
   renderAll();   // refresh countdown, protein target, pace read-out
-  if(!onboardingIncomplete()) showView("workout");   // onboarding done — send them to train
+  const missing=[
+    [!state.name,          "name-in",       "your name"],
+    [!state.gender,        "gender-pills",  "gender"],
+    [!state.murphDate,     "murph-date-in", "a target date"],
+    [!(state.daysPerWeek>0),"dpw-pills",    "days per week"],
+    [!(state.bodyweight>0),"weight-in",     "your weight"]
+  ].filter(m=>m[0]);
+  document.querySelectorAll("#view-inputs .needs").forEach(e=>e.classList.remove("needs"));
+  const msg=$("goal-msg");
+  if(missing.length){
+    missing.forEach(([,id])=>{ const e=$(id); if(e) e.classList.add("needs"); });
+    const names=missing.map(m=>m[2]);
+    msg.className="bf-msg err";
+    msg.textContent="Still needed: "+(names.length>1 ? names.slice(0,-1).join(", ")+" and "+names[names.length-1] : names[0])+".";
+    $(missing[0][1]).scrollIntoView({block:"center"});
+    return;
+  }
+  msg.className="bf-msg"; msg.textContent="";
+  showView("workout");   // onboarding done — send them to train
 };
