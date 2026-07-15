@@ -59,14 +59,6 @@
     text-align:center;color:var(--soft);padding:28px 24px;margin-top:16px;font-size:.9rem;}
   .placeholder .big{font-size:2.4rem;margin-bottom:8px;}
   .placeholder b{color:var(--olive);}
-  /* bodyweight chart */
-  #weight-chart .wchart{width:100%;height:auto;display:block;overflow:visible;}
-  .wchart .wline{fill:none;stroke:var(--olive);stroke-width:2.5;stroke-linejoin:round;stroke-linecap:round;}
-  .wchart .warea{fill:var(--olive-2);opacity:.12;stroke:none;}
-  .wchart .grid{stroke:var(--line);stroke-width:1;}
-  .wchart .ax{font-family:"IBM Plex Mono",monospace;font-size:11px;fill:var(--soft);}
-  .wchart-meta{font-family:"IBM Plex Mono",monospace;font-size:.78rem;color:var(--soft);margin-top:10px;text-align:center;}
-  .wchart-meta b{color:var(--olive);}
   /* progress dashboard */
   .bar{fill:var(--olive-2);}
   .barval{font-family:"IBM Plex Mono",monospace;font-size:11px;fill:var(--soft);}
@@ -368,7 +360,7 @@
     <li><button class="nav-item" data-view="supps" data-title="Daily supplements">Daily supplements</button></li>
     <li><button class="nav-item" data-view="history" data-title="Workout history">Workout history</button></li>
     <li><button class="nav-item" data-view="progress" data-title="Progress tracker">Progress tracker</button></li>
-    <li><button class="nav-item" data-view="reminders" data-title="Reminders">Reminders</button></li>
+    <li><button class="nav-item" data-view="inputs" data-title="Inputs">Inputs</button></li>
   </ul>
   <div class="drawer-foot">
     <div>Signed in as <b id="who"></b></div>
@@ -418,13 +410,6 @@
       <h2>Daily supplements</h2>
       <p class="today" id="supp-today">Today</p>
       <div class="supp-row">
-        <span class="lab">Bodyweight</span>
-        <div class="protein-input">
-          <input type="number" id="bw-in" inputmode="numeric" placeholder="lb" min="50" max="600">
-          <button id="bw-save">Save</button>
-        </div>
-      </div>
-      <div class="supp-row">
         <span class="lab">Protein</span>
         <button class="protein-toggle" id="protein-btn">Tap when you've had a shake (48g)</button>
       </div>
@@ -454,10 +439,31 @@
     </div>
   </section>
 
-  <!-- REMINDERS (push notifications) -->
-  <section class="view" id="view-reminders" hidden>
-    <h2 class="view-title">Reminders</h2>
+  <!-- INPUTS (goal + notifications) -->
+  <section class="view" id="view-inputs" hidden>
+    <h2 class="view-title">Inputs</h2>
     <div class="supp-card">
+      <p class="rem-lead" id="goal-intro" hidden>👋 <b>Welcome.</b> Set your target date, weekly cadence, and weight — the app builds your plan and reminders around them.</p>
+      <h2>Your goal</h2>
+      <div class="rem-field">
+        <label class="rem-label" for="murph-date-in">Murph-ready by</label>
+        <input type="date" id="murph-date-in">
+      </div>
+      <div class="rem-field">
+        <label class="rem-label">Days per week you'll train</label>
+        <div class="rem-days" id="dpw-pills"></div>
+      </div>
+      <div class="rem-field">
+        <label class="rem-label" for="weight-in">Your weight</label>
+        <div class="protein-input">
+          <input type="number" id="weight-in" inputmode="numeric" placeholder="lb" min="50" max="600">
+          <button id="goal-save">Save</button>
+        </div>
+      </div>
+      <div class="supp-caption" id="pace-readout"></div>
+    </div>
+    <div class="supp-card">
+      <h2>Notifications</h2>
       <p class="rem-lead">Get a push nudge to train — on the days and time <em>you</em> choose.</p>
       <button class="complete" id="rem-toggle">Turn on reminders</button>
       <div class="rem-status" id="rem-status"></div>
@@ -531,11 +537,6 @@
       <h2>Strength</h2>
       <div class="lift-sel" id="strength-controls"></div>
       <div id="strength-chart"></div>
-    </div>
-
-    <div class="supp-card">
-      <h2>Bodyweight</h2>
-      <div id="weight-chart"></div>
     </div>
   </section>
 
@@ -650,12 +651,32 @@ function nameFor(email){ return NAMES[email] || (email? email.split("@")[0] : "A
 // "Everyday" target ≈ 0.8 g/lb; range spans 0.7–1.0.
 function proteinGoal(){ return state.bodyweight>0 ? Math.round(state.bodyweight*0.8) : null; }
 function proteinRange(){ return state.bodyweight>0 ? [Math.round(state.bodyweight*0.7), Math.round(state.bodyweight)] : null; }
+// The full road to Murph-ready: 4 phases × 16 sessions. Only Phase 1 is built today;
+// this is the pacing horizon and can be tuned as later phases are authored.
+const PROGRAM_SESSIONS=64;
+// Parse a "YYYY-MM-DD" input value into a local Date (matches fmtDate's parsing).
+function parseYMD(s){ if(!/^\d{4}-\d{2}-\d{2}$/.test(s||""))return null; const p=s.split("-"); return new Date(+p[0],+p[1]-1,+p[2]); }
+function murphDate(){ return state.murphDate ? parseYMD(state.murphDate) : null; }
+// Is a target date reachable at a chosen weekly cadence? Null until both are given.
+// Params are explicit so the Inputs page can preview unsaved values too.
+function paceInfo(md, dpw, completedLen){
+  if(!md || !(dpw>0)) return null;
+  const today=new Date(); today.setHours(0,0,0,0);
+  const weeksUntil=Math.max(0,(md-today)/(7*86400000));
+  const sessionsRemaining=Math.max(0,PROGRAM_SESSIONS-(completedLen||0));
+  const weeksNeeded=Math.ceil(sessionsRemaining/dpw);
+  const weeksPerPhase=Math.ceil(16/dpw);
+  const onPace=weeksNeeded<=Math.floor(weeksUntil);
+  const suggestedDpw=weeksUntil>0?Math.min(7,Math.ceil(sessionsRemaining/weeksUntil)):7;
+  return {weeksUntil,sessionsRemaining,weeksNeeded,weeksPerPhase,onPace,suggestedDpw};
+}
+// First-run gate: the three goal inputs the app personalizes around.
+function onboardingIncomplete(){ return !state.murphDate || !(state.daysPerWeek>0) || !(state.bodyweight>0); }
 // Recommended working weight per exercise: the user's saved value, else the plan default.
 function exWeight(e){ return (state.weights && state.weights[e.name]!=null) ? state.weights[e.name] : e.w.def; }
 function weightedForDay(day){ return PHASE1[day].ex.filter(e=>e.w); }
 function normalizeState(){
   if(!state.weights) state.weights={};
-  if(!state.weightLog) state.weightLog=[];
   if(!state.fcmTokens) state.fcmTokens=[];
   if(!state.reminderPrefs) state.reminderPrefs={enabled:false,days:[0,1,2,3,4,5,6],time:"07:00",tz:(Intl.DateTimeFormat().resolvedOptions().timeZone||"America/New_York")};
   if(typeof state.recoveryDue!=="boolean") state.recoveryDue=false;
@@ -663,8 +684,9 @@ function normalizeState(){
   if(!state.deload) state.deload={active:false,left:0,cooldown:0};
   if(!state.milestones) state.milestones={};
   if(!state.benchmarks) state.benchmarks=[];
-  // migrate a pre-existing single bodyweight into the dated weight log
-  if(state.bodyweight>0 && !state.weightLog.length) state.weightLog=[{date:todayKey(),lb:state.bodyweight}];
+  // Goal inputs (set on the Inputs page): target date + weekly training cadence.
+  if(state.murphDate===undefined) state.murphDate=null;
+  if(state.daysPerWeek===undefined) state.daysPerWeek=null;
 }
 
 /* ---- Coach's note: a trainer-style summary generated from the logged feedback ---- */
@@ -845,11 +867,12 @@ function devInit(){
   user={email:"dev@local",uid:"dev"}; userRef=null;   // userRef null => save() never hits Firestore
   let saved=null;
   try{ const raw=localStorage.getItem(DEV_KEY); if(raw) saved=JSON.parse(raw); }catch(e){}
-  state = saved || {completed:[],supps:{},plan:"murph-phase1",bodyweight:null,weights:{},weightLog:[]};
+  state = saved || {completed:[],supps:{},plan:"murph-phase1",bodyweight:null,weights:{},murphDate:null,daysPerWeek:null};
   normalizeState();
   hideOverlay();
   $("who").textContent="🔧 Local test (no cloud)";
   ready=true; render();
+  if(onboardingIncomplete()) showView("inputs");   // first run: go set your goal inputs
 }
 
 async function initUserData(email){
@@ -858,7 +881,7 @@ async function initUserData(email){
   try{ snap=await getDoc(userRef); }catch(e){}
   if(snap && snap.exists() && Array.isArray(snap.data().completed)){
     const d=snap.data();
-    state={completed:d.completed||[], supps:d.supps||{}, plan:d.plan||"murph-phase1", bodyweight:d.bodyweight||null, weights:d.weights||{}, weightLog:d.weightLog||[], fcmTokens:d.fcmTokens||[], reminderPrefs:d.reminderPrefs||null, coachNote:d.coachNote||null, recoveryDue:!!d.recoveryDue, recoveryReason:d.recoveryReason||null, deload:d.deload||{active:false,left:0,cooldown:0}, milestones:d.milestones||{}, benchmarks:d.benchmarks||[]};
+    state={completed:d.completed||[], supps:d.supps||{}, plan:d.plan||"murph-phase1", bodyweight:d.bodyweight||null, weights:d.weights||{}, murphDate:d.murphDate||null, daysPerWeek:d.daysPerWeek||null, fcmTokens:d.fcmTokens||[], reminderPrefs:d.reminderPrefs||null, coachNote:d.coachNote||null, recoveryDue:!!d.recoveryDue, recoveryReason:d.recoveryReason||null, deload:d.deload||{active:false,left:0,cooldown:0}, milestones:d.milestones||{}, benchmarks:d.benchmarks||[]};
   }else{
     // New profile. Only the husband inherits the pre-cloud Session #1 backfill /
     // any log already stored on his device; everyone else starts clean.
@@ -876,6 +899,7 @@ async function initUserData(email){
   normalizeState();
   ready=true;
   render();
+  if(onboardingIncomplete()) showView("inputs");   // first run: go set your goal inputs
 }
 
 /* ---------------- Persistence ---------------- */
@@ -887,7 +911,8 @@ async function save(){
       await setDoc(userRef, {
         email:user.email, name:nameFor((user.email||"").toLowerCase()),
         plan:state.plan||"murph-phase1", bodyweight:state.bodyweight||null, weights:state.weights||{},
-        weightLog:state.weightLog||[], fcmTokens:state.fcmTokens||[], reminderPrefs:state.reminderPrefs||null,
+        murphDate:state.murphDate||null, daysPerWeek:state.daysPerWeek||null,
+        fcmTokens:state.fcmTokens||[], reminderPrefs:state.reminderPrefs||null,
         coachNote:state.coachNote||null, recoveryDue:!!state.recoveryDue, recoveryReason:state.recoveryReason||null,
         deload:state.deload||{active:false,left:0,cooldown:0}, milestones:state.milestones||{}, benchmarks:state.benchmarks||[],
         completed:state.completed, supps:state.supps, updatedAt:Date.now()
@@ -998,17 +1023,15 @@ function renderSupps(){
   const pbtn=$("protein-btn"); const hadShake=t.protein!=null;
   if(hadShake){pbtn.classList.add("on");pbtn.textContent="✓ Shake had ("+SHAKE_G+"g)";}
   else{pbtn.classList.remove("on");pbtn.textContent="Tap when you've had a shake ("+SHAKE_G+"g)";}
-  const bw=$("bw-in");
-  if(document.activeElement!==bw)bw.value=state.bodyweight>0?state.bodyweight:"";
-  // protein caption: shake status + (optional) daily target from bodyweight
+  // protein caption: shake status + daily target derived from weight (set on the Inputs page)
   const goal=proteinGoal(); const cap=$("protein-caption");
   cap.className="supp-caption"+(hadShake?" hit":"");
   if(hadShake){
     cap.innerHTML="Shake logged today — <b>"+SHAKE_G+" g protein</b>"+(goal?" · daily target ~"+goal+" g":"");
+  }else if(goal){
+    cap.innerHTML="Tap above when you've had your shake ("+SHAKE_G+" g) · daily target ~<b>"+goal+" g</b>";
   }else{
-    cap.innerHTML=goal
-      ? "Tap above when you've had your shake ("+SHAKE_G+" g) · daily target ~<b>"+goal+" g</b>"
-      : "Tap above when you've had your protein shake ("+SHAKE_G+" g).";
+    cap.innerHTML="Add your weight on the <b>Inputs</b> page to get a daily protein target.";
   }
   const strip=$("supp-strip");const cells=[];const now=new Date();
   for(let i=6;i>=0;i--){const d=new Date(now);d.setDate(now.getDate()-i);const k=iso(d);const s=state.supps[k]||{};
@@ -1021,45 +1044,10 @@ function renderSupps(){
 
 function render(){
   if(!ready) return;
-  renderRecovery();renderProgress();renderNext();renderWeights();renderHist();renderSupps();renderBanner();renderProgressDash();renderReminders();renderCoachNote();
-}
-
-// Bodyweight-over-time line chart for the Progress tracker view.
-function renderWeightChart(){
-  const el=$("weight-chart"); if(!el) return;
-  const log=(state.weightLog||[]).slice().sort((a,b)=> a.date<b.date?-1: a.date>b.date?1:0);
-  const md=k=>{const p=k.split("-");return parseInt(p[1])+"/"+parseInt(p[2]);};
-  if(log.length<2){
-    const cur=log.length?log[log.length-1].lb:(state.bodyweight||null);
-    el.innerHTML='<p class="chart-empty">'+(cur?"Current: <b>"+cur+" lb</b>. ":"")+
-      "Log your bodyweight on a few different days (under Daily supplements) to see your trend here.</p>";
-    return;
-  }
-  const W=520,H=210,L=40,R=14,T=16,B=30;
-  const ys=log.map(d=>d.lb); let lo=Math.min(...ys), hi=Math.max(...ys);
-  if(lo===hi){ lo-=2; hi+=2; } else { const p=(hi-lo)*0.15; lo-=p; hi+=p; }
-  const x=i=> L+(W-L-R)*(i/(log.length-1));
-  const y=v=> T+(H-T-B)*(1-(v-lo)/(hi-lo));
-  const line="M"+log.map((d,i)=>x(i).toFixed(1)+","+y(d.lb).toFixed(1)).join(" L");
-  const area="M"+x(0).toFixed(1)+","+(H-B)+" L"+log.map((d,i)=>x(i).toFixed(1)+","+y(d.lb).toFixed(1)).join(" L")+" L"+x(log.length-1).toFixed(1)+","+(H-B)+" Z";
-  const dots=log.map((d,i)=>'<circle cx="'+x(i).toFixed(1)+'" cy="'+y(d.lb).toFixed(1)+'" r="3.2" fill="var(--olive)"/>').join("");
-  const cur=log[log.length-1].lb, first=log[0].lb, delta=cur-first;
-  const deltaStr=(delta>0?"+":"")+(Math.abs(delta)%1?delta.toFixed(1):delta.toFixed(0))+" lb since "+md(log[0].date);
-  el.innerHTML=
-    '<svg viewBox="0 0 '+W+' '+H+'" class="wchart" role="img" aria-label="Bodyweight over time">'+
-      '<line x1="'+L+'" y1="'+(H-B)+'" x2="'+(W-R)+'" y2="'+(H-B)+'" class="grid"/>'+
-      '<path d="'+area+'" class="warea"/>'+
-      '<path d="'+line+'" class="wline"/>'+dots+
-      '<text x="'+(L-6)+'" y="'+(T+4)+'" text-anchor="end" class="ax">'+Math.round(hi)+'</text>'+
-      '<text x="'+(L-6)+'" y="'+(H-B)+'" text-anchor="end" class="ax">'+Math.round(lo)+'</text>'+
-      '<text x="'+x(0)+'" y="'+(H-9)+'" text-anchor="start" class="ax">'+md(log[0].date)+'</text>'+
-      '<text x="'+x(log.length-1)+'" y="'+(H-9)+'" text-anchor="end" class="ax">'+md(log[log.length-1].date)+'</text>'+
-    '</svg>'+
-    '<div class="wchart-meta"><b>'+cur+' lb</b> now · '+deltaStr+'</div>';
+  renderRecovery();renderProgress();renderNext();renderWeights();renderHist();renderSupps();renderBanner();renderProgressDash();renderInputs();renderReminders();renderCoachNote();
 }
 
 /* ===================== Progress dashboard ===================== */
-const MURPH_DATE=new Date(2026,11,31);
 const WEIGHTED_LIFTS=["Lat pulldown or assisted pull-up","Goblet squat","DB Romanian deadlift","DB bench press (or incline push-ups)","Overhead DB press"];
 let selectedLift=WEIGHTED_LIFTS[0];
 // The road to Murph — capability checkpoints tied to the real requirements
@@ -1165,9 +1153,14 @@ function weeklyCounts(maxN){
 // --- renderers ---
 function renderCountdownPhase(){
   if(!$("murph-countdown")) return;
-  const days=Math.max(0,Math.ceil((MURPH_DATE-new Date())/86400000));
   const done=state.completed.length, p1=Math.min(done,16), pct=Math.round(p1/16*100);
-  $("murph-countdown").innerHTML='<div class="countdown"><div class="big">'+days+'</div><div class="sub">days to Murph · Dec 31</div></div>';
+  const md=murphDate();
+  if(md){
+    const days=Math.max(0,Math.ceil((md-new Date())/86400000));
+    $("murph-countdown").innerHTML='<div class="countdown"><div class="big">'+days+'</div><div class="sub">days to Murph · '+fmtDate(iso(md))+'</div></div>';
+  }else{
+    $("murph-countdown").innerHTML='<div class="countdown"><div class="big">—</div><div class="sub">set your target date on the Inputs page</div></div>';
+  }
   let segs=""; for(let i=0;i<4;i++){ segs+= i===0 ? '<div class="phase-seg"><div class="fill" style="width:'+pct+'%"></div></div>' : '<div class="phase-seg"></div>'; }
   const cap = done>=16 ? "Phase 1 complete 🎉 — Phase 2 builds from your numbers" : "Phase 1 · Foundation — session "+Math.min(done+1,16)+" of 16";
   $("phase-bar").innerHTML='<div class="phase-seg-row">'+segs+'</div><div class="phase-labels"><span>Foundation</span><span>Build</span><span>Prep</span><span>Peak</span></div><div class="phase-caption">'+cap+'</div>';
@@ -1311,7 +1304,7 @@ $("bf-save").onclick=async()=>{
 };
 
 function renderProgressDash(){
-  renderCountdownPhase();renderBenchmarks();renderMilestones();renderConsistency();renderDifficultyChart();renderStrengthChart();renderWeightChart();
+  renderCountdownPhase();renderBenchmarks();renderMilestones();renderConsistency();renderDifficultyChart();renderStrengthChart();
 }
 
 function cleanupDay(k){const s=state.supps[k];if(s&&!s.creatine&&s.protein==null)delete state.supps[k];}
@@ -1370,26 +1363,12 @@ $("protein-btn").onclick=async()=>{
   else{state.supps[tk].protein=SHAKE_G;}
   cleanupDay(tk); renderSupps(); await save();
 };
-$("bw-save").onclick=async()=>{
-  const v=parseInt($("bw-in").value,10);
-  if(!isNaN(v)&&v>0){
-    state.bodyweight=v;
-    if(!state.weightLog) state.weightLog=[];
-    const tk=todayKey();
-    const e=state.weightLog.find(x=>x.date===tk);
-    if(e) e.lb=v; else state.weightLog.push({date:tk,lb:v});   // one entry per day
-  }else{
-    state.bodyweight=null;
-  }
-  renderSupps(); renderWeightChart(); await save();
-  $("bw-in").blur();
-};
 $("undo").onclick=async()=>{if(!state.completed.length)return;state.completed.pop();render();await save();};
 $("reset").onclick=async()=>{
   if(!confirm("Clear your entire log (workouts + supplements)? This can't be undone."))return;
-  // Clear the log; keep profile/settings (bodyweight, weights, weight history, reminder setup).
+  // Clear the log; keep profile/settings (bodyweight, weights, goal inputs, reminder setup).
   state={completed:[],supps:{},plan:"murph-phase1",bodyweight:state.bodyweight||null,weights:state.weights||{},
-    weightLog:state.weightLog||[],reminderPrefs:state.reminderPrefs||null,fcmTokens:state.fcmTokens||[]};
+    murphDate:state.murphDate||null,daysPerWeek:state.daysPerWeek||null,reminderPrefs:state.reminderPrefs||null,fcmTokens:state.fcmTokens||[]};
   normalizeState();
   resetInputs();render();$("copy-panel").classList.remove("show");await save();
 };
@@ -1419,7 +1398,7 @@ $("copy").onclick=async()=>{
 };
 
 /* ---------------- Navigation (hamburger drawer + views) ---------------- */
-const VIEWS=["workout","supps","history","progress","reminders"];
+const VIEWS=["workout","supps","history","progress","inputs"];
 function openDrawer(){ $("drawer").classList.add("open"); $("drawer-backdrop").classList.add("show"); }
 function closeDrawer(){ $("drawer").classList.remove("open"); $("drawer-backdrop").classList.remove("show"); }
 function showView(v){
@@ -1445,6 +1424,36 @@ function updateDaySummary(){
   if(sel.length===7){ el.textContent="On: every day"; }
   else if(sel.length){ el.textContent="On: "+sel.map(i=>DAY_NAMES[i]).join(" · "); }
   else{ el.textContent="No days selected — pick at least one."; }
+}
+/* ---------------- Inputs page: goal (target date · days/week · weight) ---------------- */
+function dpwSelected(){ const el=$("dpw-pills"); if(!el) return null; const b=el.querySelector(".rem-day.sel"); return b?+b.dataset.d:null; }
+// Live pace read-out from whatever is currently in the inputs (saved or not).
+function updatePaceReadout(){
+  const cap=$("pace-readout"); if(!cap) return;
+  const md=parseYMD($("murph-date-in").value), dpw=dpwSelected();
+  const info=paceInfo(md, dpw, state.completed?state.completed.length:0);
+  if(!info){ cap.className="supp-caption"; cap.innerHTML="Pick a target date and weekly cadence to see if you're on track."; return; }
+  if(info.onPace){
+    cap.className="supp-caption hit";
+    cap.innerHTML="At <b>"+dpw+" day"+(dpw>1?"s":"")+"/week</b> you'll be Murph-ready by "+fmtDate(iso(md))+" — <b>on track</b> (~"+info.weeksPerPhase+" weeks per phase).";
+  }else{
+    const over=info.weeksNeeded-Math.floor(info.weeksUntil);
+    cap.className="supp-caption";
+    cap.innerHTML="At "+dpw+" day"+(dpw>1?"s":"")+"/week that's ~<b>"+over+" week"+(over!==1?"s":"")+" past</b> "+fmtDate(iso(md))+". Train ~<b>"+info.suggestedDpw+"/week</b>, or move the date.";
+  }
+}
+function renderInputs(){
+  const el=$("dpw-pills"); if(!el) return;
+  $("goal-intro").hidden = !onboardingIncomplete();
+  const di=$("murph-date-in"); if(document.activeElement!==di) di.value=state.murphDate||"";
+  const wi=$("weight-in"); if(document.activeElement!==wi) wi.value=state.bodyweight>0?state.bodyweight:"";
+  const sel=state.daysPerWeek;
+  el.innerHTML=[1,2,3,4,5,6,7].map(n=>'<button type="button" class="rem-day'+(sel===n?" sel":"")+'" data-d="'+n+'">'+n+'</button>').join("");
+  el.querySelectorAll(".rem-day").forEach(b=>{ b.onclick=()=>{
+    el.querySelectorAll(".rem-day").forEach(x=>x.classList.remove("sel"));
+    b.classList.add("sel"); updatePaceReadout();
+  }; });
+  updatePaceReadout();
 }
 function renderReminders(){
   const btn=$("rem-toggle"); if(!btn) return;
@@ -1496,6 +1505,16 @@ $("rem-save").onclick=async()=>{
   p.tz=Intl.DateTimeFormat().resolvedOptions().timeZone||p.tz||"America/New_York";
   await save();
   const m=$("rem-savemsg"); m.textContent="Saved ✓"; setTimeout(()=>{m.textContent="";},2000);
+};
+// Live-preview the pace read-out as the date/weight fields change (pills handle their own).
+$("murph-date-in").oninput=updatePaceReadout;
+$("goal-save").onclick=async()=>{
+  const d=$("murph-date-in").value; state.murphDate = /^\d{4}-\d{2}-\d{2}$/.test(d) ? d : null;
+  state.daysPerWeek = dpwSelected();
+  const w=parseInt($("weight-in").value,10); state.bodyweight = (!isNaN(w)&&w>0) ? w : null;
+  await save();
+  render();   // refresh countdown, protein target, pace read-out
+  if(!onboardingIncomplete()) showView("workout");   // onboarding done — send them to train
 };
 
 /* ---------------- Boot ---------------- */
