@@ -500,7 +500,7 @@
           <label>Pull-ups <input type="number" id="bf-pull" min="0" max="500" inputmode="numeric" placeholder="max"></label>
           <label>Push-ups <input type="number" id="bf-push" min="0" max="1000" inputmode="numeric" placeholder="max"></label>
           <label>Air squats <input type="number" id="bf-squat" min="0" max="1000" inputmode="numeric" placeholder="max"></label>
-          <label>1-mile time <input type="text" id="bf-mile" inputmode="numeric" placeholder="8:30"></label>
+          <label>1-mile time <input type="text" id="bf-mile" inputmode="numeric" maxlength="5" placeholder="8:30"></label>
         </div>
         <div class="bench-actions">
           <button class="complete" id="bf-save">Save test</button>
@@ -1251,7 +1251,17 @@ const BENCH_METRICS=[
   {id:"mileSec",label:"1-mile",time:true}
 ];
 let benchMetric="pullups";
-function parseMile(s){ const m=String(s).trim().match(/^(\d{1,2}):([0-5]\d)$/); return m?(+m[1])*60+(+m[2]):null; }
+// Accepts "m:ss"/"mm:ss", and also bare digits from the numeric keypad ("830" -> 8:30).
+function parseMile(s){
+  s=String(s).trim();
+  const m=s.match(/^(\d{1,2}):([0-5]\d)$/);
+  if(m) return (+m[1])*60+(+m[2]);
+  const d=s.replace(/\D/g,"");
+  if(/^\d{3,4}$/.test(d)){ const sec=+d.slice(-2), min=+d.slice(0,-2); if(sec<60) return min*60+sec; }
+  return null;
+}
+// Numeric keypad has no colon, so insert it as they type: "830" displays as "8:30".
+function formatMileField(v){ const d=String(v).replace(/\D/g,"").slice(0,4); return d.length>2 ? d.slice(0,-2)+":"+d.slice(-2) : d; }
 function fmtMile(sec){ if(sec==null) return "—"; const m=Math.floor(sec/60), s=Math.round(sec%60); return m+":"+String(s).padStart(2,"0"); }
 function renderBenchmarks(){
   const rEl=$("bench-readiness"); if(!rEl) return;
@@ -1280,6 +1290,7 @@ function renderBenchmarks(){
 }
 $("bench-log-btn").onclick=()=>{ const f=$("bench-form"); f.hidden=!f.hidden; if(!f.hidden && !$("bf-date").value) $("bf-date").value=todayKey(); };
 $("bf-cancel").onclick=()=>{ $("bench-form").hidden=true; $("bf-msg").textContent=""; };
+$("bf-mile").oninput=(e)=>{ e.target.value=formatMileField(e.target.value); };
 $("bf-save").onclick=async()=>{
   const date=$("bf-date").value||todayKey();
   const pull=parseInt($("bf-pull").value,10), push=parseInt($("bf-push").value,10), squat=parseInt($("bf-squat").value,10);
