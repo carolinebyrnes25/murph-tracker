@@ -4,7 +4,9 @@
 const admin = require('firebase-admin');
 const { DateTime } = require('luxon');
 
-const svc = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
+// Strip a possible UTF-8 BOM / stray whitespace the secret may carry, then parse.
+const svcRaw = (process.env.FIREBASE_SERVICE_ACCOUNT || '').replace(/^﻿/, '').trim();
+const svc = JSON.parse(svcRaw);
 admin.initializeApp({ credential: admin.credential.cert(svc) });
 const db = admin.firestore();
 const messaging = admin.messaging();
