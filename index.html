@@ -242,10 +242,10 @@
   .supp-row{display:flex;align-items:center;gap:12px;padding:12px 0;border-top:1px solid var(--line);}
   .supp-row:first-of-type{border-top:none;}
   .supp-row .lab{font-weight:600;font-size:.95rem;flex:none;width:104px;white-space:nowrap;}
-  .creatine-toggle{flex:1;border:1px solid var(--line);background:var(--paper);border-radius:10px;
+  .creatine-toggle,.protein-toggle{flex:1;border:1px solid var(--line);background:var(--paper);border-radius:10px;
     padding:12px 14px;font-family:"Inter",sans-serif;font-size:.9rem;font-weight:600;color:var(--soft);
     cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:all .15s;}
-  .creatine-toggle.on{background:var(--olive-2);border-color:transparent;color:#fff;}
+  .creatine-toggle.on,.protein-toggle.on{background:var(--olive-2);border-color:transparent;color:#fff;}
   .protein-input{flex:1;display:flex;gap:8px;}
   .protein-input input{flex:1;min-width:0;border:1px solid var(--line);border-radius:10px;background:var(--paper);
     font-family:"Inter",sans-serif;font-size:.9rem;padding:12px 13px;color:var(--ink);}
@@ -426,10 +426,7 @@
       </div>
       <div class="supp-row">
         <span class="lab">Protein</span>
-        <div class="protein-input">
-          <input type="number" id="protein-in" inputmode="numeric" placeholder="grams today" min="0" max="400">
-          <button id="protein-save">Save</button>
-        </div>
+        <button class="protein-toggle" id="protein-btn">Tap when you've had a shake (48g)</button>
       </div>
       <div class="supp-caption" id="protein-caption"></div>
       <div class="supp-row">
@@ -612,6 +609,7 @@ const PHASE1 = {
 const ORDER=["A","B","C","D"];
 const PHASE1_SESSIONS=16;
 const CREATINE_G=5;
+const SHAKE_G=48;   // one protein shake = 48 g
 const CACHE_KEY="murph:cache";      // local mirror, keyed per-uid below
 const LEGACY_KEY="murph:state";     // pre-cloud single-user data to migrate
 // DEV/test mode: ANY host that isn't the real production URL runs offline of Firebase —
@@ -997,27 +995,26 @@ function renderSupps(){
   const btn=$("creatine-btn");
   if(t.creatine){btn.classList.add("on");btn.textContent="✓ Taken ("+t.creatine+"g)";}
   else{btn.classList.remove("on");btn.textContent="Tap when taken (5g)";}
-  const pin=$("protein-in");
-  if(document.activeElement!==pin)pin.value=t.protein!=null?t.protein:"";
+  const pbtn=$("protein-btn"); const hadShake=t.protein!=null;
+  if(hadShake){pbtn.classList.add("on");pbtn.textContent="✓ Shake had ("+SHAKE_G+"g)";}
+  else{pbtn.classList.remove("on");pbtn.textContent="Tap when you've had a shake ("+SHAKE_G+"g)";}
   const bw=$("bw-in");
   if(document.activeElement!==bw)bw.value=state.bodyweight>0?state.bodyweight:"";
-  // protein target caption
-  const goal=proteinGoal(); const cap=$("protein-caption"); const todayP=t.protein!=null?t.protein:null;
-  if(goal){
-    const rg=proteinRange();
-    cap.innerHTML=(todayP!=null)
-      ? "Today <b>"+todayP+" / "+goal+" g</b> · aim "+rg[0]+"–"+rg[1]+" g/day"
-      : "Target ~<b>"+goal+" g</b>/day · range "+rg[0]+"–"+rg[1]+" g (0.7–1.0 g/lb)";
-    cap.className="supp-caption"+(todayP!=null&&todayP>=goal?" hit":"");
+  // protein caption: shake status + (optional) daily target from bodyweight
+  const goal=proteinGoal(); const cap=$("protein-caption");
+  cap.className="supp-caption"+(hadShake?" hit":"");
+  if(hadShake){
+    cap.innerHTML="Shake logged today — <b>"+SHAKE_G+" g protein</b>"+(goal?" · daily target ~"+goal+" g":"");
   }else{
-    cap.innerHTML="Set your bodyweight to get a daily protein target.";
-    cap.className="supp-caption";
+    cap.innerHTML=goal
+      ? "Tap above when you've had your shake ("+SHAKE_G+" g) · daily target ~<b>"+goal+" g</b>"
+      : "Tap above when you've had your protein shake ("+SHAKE_G+" g).";
   }
   const strip=$("supp-strip");const cells=[];const now=new Date();
   for(let i=6;i>=0;i--){const d=new Date(now);d.setDate(now.getDate()-i);const k=iso(d);const s=state.supps[k]||{};
     const hit=s.creatine||s.protein!=null;
-    const pMet=goal&&s.protein!=null&&s.protein>=goal;
-    cells.push('<div class="supp-day"><div class="dot'+(hit?' hit':'')+'"><span class="c">'+(s.creatine?'C✓':'·')+'</span><span class="p"'+(pMet?' style="color:var(--olive-2);font-weight:600"':'')+'>'+(s.protein!=null?s.protein+'g':'')+'</span></div><div class="lbl">'+shortMD(k)+'</div></div>');
+    const pShake=s.protein!=null;
+    cells.push('<div class="supp-day"><div class="dot'+(hit?' hit':'')+'"><span class="c">'+(s.creatine?'C✓':'·')+'</span><span class="p"'+(pShake?' style="color:var(--olive-2);font-weight:600"':'')+'>'+(pShake?'🥤':'')+'</span></div><div class="lbl">'+shortMD(k)+'</div></div>');
   }
   strip.innerHTML=cells.join("");
 }
@@ -1356,12 +1353,11 @@ $("creatine-btn").onclick=async()=>{
   else{state.supps[tk].creatine=CREATINE_G;}
   cleanupDay(tk); renderSupps(); await save();
 };
-$("protein-save").onclick=async()=>{
-  const tk=todayKey(); const v=parseInt($("protein-in").value,10);
-  state.supps[tk]=state.supps[tk]||{};
-  if(!isNaN(v)&&v>0){state.supps[tk].protein=v;}else{delete state.supps[tk].protein;}
+$("protein-btn").onclick=async()=>{
+  const tk=todayKey(); state.supps[tk]=state.supps[tk]||{};
+  if(state.supps[tk].protein!=null){delete state.supps[tk].protein;}
+  else{state.supps[tk].protein=SHAKE_G;}
   cleanupDay(tk); renderSupps(); await save();
-  $("protein-in").blur();
 };
 $("bw-save").onclick=async()=>{
   const v=parseInt($("bw-in").value,10);
@@ -1404,7 +1400,7 @@ $("copy").onclick=async()=>{
   const days=Object.keys(state.supps).sort();
   if(days.length){
     txt+="\nSupplements:\n";
-    days.forEach(k=>{const s=state.supps[k];txt+=fmtDate(k)+" — creatine "+(s.creatine?s.creatine+"g":"—")+" — protein "+(s.protein!=null?s.protein+"g":"—")+"\n";});
+    days.forEach(k=>{const s=state.supps[k];txt+=fmtDate(k)+" — creatine "+(s.creatine?s.creatine+"g":"—")+" — shake "+(s.protein!=null?"✓ ("+s.protein+"g)":"—")+"\n";});
   }
   $("copy-text").value=txt; $("copy-panel").classList.add("show");
   try{await navigator.clipboard.writeText(txt);$("cmsg").textContent="Copied to clipboard.";}
