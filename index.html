@@ -47,6 +47,7 @@
     <li><button class="nav-item" data-view="progress" data-title="Progress tracker">Progress tracker</button></li>
     <li><button class="nav-item" data-view="inputs" data-title="Inputs">Inputs</button></li>
   </ul>
+  <p class="nav-lock-note" id="nav-lock-note" hidden>🔒 Finish your setup on <b>Inputs</b> to unlock the rest — your plan is built from those answers.</p>
   <div class="drawer-foot">
     <div>Signed in as <b id="who"></b></div>
     <button class="mini" id="signout">Sign out</button>
@@ -129,7 +130,7 @@
   <section class="view" id="view-inputs" hidden>
     <h2 class="view-title">Inputs</h2>
     <div class="supp-card">
-      <p class="rem-lead" id="goal-intro" hidden>👋 <b>Welcome.</b> Tell us about you and your goal — the app builds your plan, coaching, and reminders around them.</p>
+      <p class="rem-lead" id="goal-intro" hidden>👋 <b>Welcome.</b> Tell us about you and your goal — the app builds your plan, coaching, and reminders around them. <b>All five are needed before you start</b>, so your plan is right from day one.</p>
       <h2>You &amp; your goal</h2>
       <div class="rem-field">
         <label class="rem-label" for="name-in">Your name</label>
@@ -159,6 +160,7 @@
         </div>
         <div class="rem-days-summary" id="protein-hint"></div>
       </div>
+      <div class="bf-msg" id="goal-msg"></div>
     </div>
     <div class="supp-card">
       <h2>Notifications</h2>
