@@ -40,12 +40,22 @@ export function updatePaceReadout(){
     cap.innerHTML="At "+dpw+" day"+(dpw>1?"s":"")+"/week that's ~<b>"+over+" week"+(over!==1?"s":"")+" past</b> "+fmtDate(iso(md))+". Train ~<b>"+info.suggestedDpw+"/week</b>, or move the date.";
   }
 }
+// Spell out what the weight is actually for: it sets the daily protein target (0.8 g/lb,
+// range 0.7–1.0). Reads the field live so the number moves as you type, before saving.
+export function updateProteinHint(){
+  const el=$("protein-hint"); if(!el) return;
+  const w=parseInt($("weight-in").value,10);
+  if(!(w>0)){ el.textContent="Your protein target is worked out from this."; return; }
+  el.innerHTML="At "+w+" lb we'll aim for <b>~"+Math.round(w*0.8)+" g protein/day</b> (range "+
+    Math.round(w*0.7)+"–"+Math.round(w)+" g) — shown on Daily supplements.";
+}
 export function renderInputs(){
   const el=$("dpw-pills"); if(!el) return;
   $("goal-intro").hidden = !onboardingIncomplete();
   const ni=$("name-in"); if(document.activeElement!==ni) ni.value=state.name||"";
   const di=$("murph-date-in"); if(document.activeElement!==di) di.value=state.murphDate||"";
   const wi=$("weight-in"); if(document.activeElement!==wi) wi.value=state.bodyweight>0?state.bodyweight:"";
+  updateProteinHint();
   // gender pills
   const gEl=$("gender-pills");
   gEl.innerHTML=[["m","Male"],["f","Female"]].map(([g,lbl])=>'<button type="button" class="rem-day'+(state.gender===g?" sel":"")+'" data-g="'+g+'">'+lbl+'</button>').join("");
@@ -116,6 +126,7 @@ $("rem-save").onclick=async()=>{
 };
 // Live-preview the pace read-out as the date/weight fields change (pills handle their own).
 $("murph-date-in").oninput=updatePaceReadout;
+$("weight-in").oninput=updateProteinHint;
 $("goal-save").onclick=async()=>{
   const nm=$("name-in").value.trim(); state.name = nm || null;
   state.gender = genderSelected();

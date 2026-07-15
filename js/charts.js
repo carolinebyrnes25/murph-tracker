@@ -3,7 +3,16 @@ import { state } from "./store.js";
 // --- generic SVG chart builders (single-series, app palette) ---
 export function svgLine(el, pts, opts){
   opts=opts||{};
-  if(pts.length<2){ el.innerHTML='<p class="chart-empty">'+(opts.empty||"Log a couple more sessions to see this trend.")+'</p>'; return; }
+  if(!pts.length){ el.innerHTML='<p class="chart-empty">'+(opts.empty||"Nothing logged yet.")+'</p>'; return; }
+  // One point can't make a line, but it IS the user's data — show the actual value rather than a
+  // generic "log more" message. Every metric showing that message looked like a broken chart.
+  if(pts.length===1){
+    const fmt1=opts.fmt||(v=>Math.round(v));
+    el.innerHTML='<div class="one-pt"><div class="one-pt-v">'+fmt1(pts[0].y)+(opts.unit||'')+'</div>'+
+      '<div class="one-pt-l">'+pts[0].label+' · first result</div>'+
+      '<div class="one-pt-n">'+(opts.oneMore||"Log another to see a trend line.")+'</div></div>';
+    return;
+  }
   const W=520,H=200,L=38,R=14,T=14,B=28;
   const ys=pts.map(p=>p.y);
   let lo=opts.yMin!=null?opts.yMin:Math.min(...ys), hi=opts.yMax!=null?opts.yMax:Math.max(...ys);
@@ -35,7 +44,7 @@ export function svgBars(el, data, opts){
   const bars=data.map((d,i)=>{
     const cx=L+slot*i+slot/2, x=cx-bw/2, yy=y(d.value), h=(H-B)-yy;
     const val=d.value>0?'<text x="'+cx.toFixed(1)+'" y="'+(yy-5).toFixed(1)+'" text-anchor="middle" class="barval">'+d.value+'</text>':'';
-    return '<rect x="'+x.toFixed(1)+'" y="'+yy.toFixed(1)+'" width="'+bw.toFixed(1)+'" height="'+Math.max(0,h).toFixed(1)+'" rx="4" class="bar"><title>Week of '+d.label+': '+d.value+' session'+(d.value===1?'':'s')+'</title></rect>'+val+
+    return '<rect x="'+x.toFixed(1)+'" y="'+yy.toFixed(1)+'" width="'+bw.toFixed(1)+'" height="'+Math.max(0,h).toFixed(1)+'" rx="4" class="cbar"><title>Week of '+d.label+': '+d.value+' session'+(d.value===1?'':'s')+'</title></rect>'+val+
       '<text x="'+cx.toFixed(1)+'" y="'+(H-9)+'" text-anchor="middle" class="ax">'+d.label+'</text>';
   }).join("");
   el.innerHTML='<svg viewBox="0 0 '+W+' '+H+'" class="wchart" role="img"><line x1="'+L+'" y1="'+(H-B)+'" x2="'+(W-R)+'" y2="'+(H-B)+'" class="grid"/>'+bars+'</svg>';

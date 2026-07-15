@@ -191,9 +191,12 @@ export function renderBenchmarks(){
   ctr.querySelectorAll("button").forEach(b=>{ b.onclick=()=>{ benchMetric=b.getAttribute("data-m"); renderBenchmarks(); }; });
   const met=BENCH_METRICS.find(m=>m.id===benchMetric);
   const pts=list.filter(t=>t[benchMetric]!=null).map(t=>({label:fmtDate(t.date),y:t[benchMetric]}));
+  const lbl=met.label.toLowerCase();
   svgLine($("bench-chart"), pts, met.time
-    ? {fmt:fmtMile,empty:"Log a couple of mile times to see your pace trend."}
-    : {fmt:v=>Math.round(v),empty:"Log a couple of tests to see your "+met.label.toLowerCase()+" trend."});
+    ? {fmt:fmtMile, unit:"", empty:"No mile time logged yet.",
+       oneMore:"Log another mile time to see your pace trend — this line should fall over time."}
+    : {fmt:v=>Math.round(v), empty:"No "+lbl+" logged yet.",
+       oneMore:"Log another test to see your "+lbl+" trend — this line should climb over time."});
 }
 $("bench-log-btn").onclick=()=>{ const f=$("bench-form"); f.hidden=!f.hidden; if(!f.hidden && !$("bf-date").value) $("bf-date").value=todayKey(); };
 $("bf-cancel").onclick=()=>{ $("bench-form").hidden=true; $("bf-msg").textContent=""; };

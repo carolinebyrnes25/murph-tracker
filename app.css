@@ -50,7 +50,18 @@
   .placeholder .big{font-size:2.4rem;margin-bottom:8px;}
   .placeholder b{color:var(--olive);}
   /* progress dashboard */
-  .bar{fill:var(--olive-2);}
+  /* Chart styling for svgLine/svgBars. These were originally scoped to #weight-chart and were
+     deleted along with the bodyweight chart, which left every other chart (effort, strength,
+     benchmarks) unstyled — an SVG with no fill rule paints solid black. Keep them unscoped so
+     any chart the builders draw is styled. */
+  .wchart{width:100%;height:auto;display:block;overflow:visible;}
+  .wchart .wline{fill:none;stroke:var(--olive);stroke-width:2.5;stroke-linejoin:round;stroke-linecap:round;}
+  .wchart .warea{fill:var(--olive-2);opacity:.12;stroke:none;}
+  .wchart .grid{stroke:var(--line);stroke-width:1;}
+  .wchart .ax{font-family:"IBM Plex Mono",monospace;font-size:11px;fill:var(--soft);}
+  /* NB: chart bars are .cbar, NOT .bar — `.bar` is the workout progress bar (height:7px), and in
+     SVG2 that CSS height overrides a <rect>'s height attribute, flattening every bar to a line. */
+  .cbar{fill:var(--olive-2);}
   .barval{font-family:"IBM Plex Mono",monospace;font-size:11px;fill:var(--soft);}
   .avgline{stroke:var(--flag);stroke-width:1;stroke-dasharray:4 3;opacity:.65;}
   .countdown{text-align:center;margin-bottom:14px;}
@@ -111,6 +122,11 @@
   .bf-msg{font-family:"IBM Plex Mono",monospace;font-size:.72rem;color:var(--flag);margin-top:8px;min-height:1em;}
   #bench-log-btn{margin-top:6px;}
   .chart-empty{color:var(--soft);font-size:.9rem;margin:4px 0;}
+  /* single-result state: show the number itself, not a "log more" message */
+  .one-pt{padding:14px 0 6px;}
+  .one-pt-v{font-family:"Barlow Condensed",sans-serif;font-weight:700;font-size:2.1rem;line-height:1;color:var(--olive);}
+  .one-pt-l{font-family:"IBM Plex Mono",monospace;font-size:.7rem;color:var(--soft);margin-top:4px;}
+  .one-pt-n{font-size:.8rem;color:var(--soft);margin-top:7px;}
   /* reminders */
   .rem-lead{font-size:.95rem;color:var(--ink);margin:0 0 16px;}
   #rem-toggle.on{background:var(--olive-2);}
@@ -242,7 +258,15 @@
     font-family:"Barlow Condensed",sans-serif;font-weight:600;text-transform:uppercase;letter-spacing:.03em;
     font-size:.95rem;padding:0 18px;cursor:pointer;flex:none;}
   .supp-strip{display:flex;gap:5px;margin-top:16px;}
-  .supp-day{flex:1;text-align:center;}
+  .supp-day{flex:1;text-align:center;cursor:pointer;border-radius:9px;padding:2px;}
+  .supp-day:hover .dot{outline:1px solid var(--olive-2);}
+  .supp-day:focus-visible{outline:2px solid var(--olive-2);outline-offset:1px;}
+  /* the day the toggles are writing to — must be unmistakable when it isn't today */
+  .supp-day.sel .dot{outline:2px solid var(--olive);}
+  .supp-day.sel .lbl{color:var(--olive);font-weight:700;}
+  .day-back{border:1px solid var(--line);background:var(--card);border-radius:100px;cursor:pointer;
+    font-family:"Inter",sans-serif;font-size:.68rem;color:var(--olive);padding:2px 9px;margin-left:6px;}
+  .day-back:hover{background:var(--band);}
   .supp-day .dot{height:38px;border-radius:8px;background:var(--band);display:flex;flex-direction:column;
     align-items:center;justify-content:center;gap:1px;margin-bottom:4px;padding:2px;}
   .supp-day .dot.hit{background:#DDE7C8;}
