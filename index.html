@@ -565,9 +565,10 @@ const firebaseConfig = {
 };
 
 // ---- Who's allowed in, and their display names ----
+// Open sign-up: anyone with a Google account gets their own tracker. Privacy is enforced by the
+// Firestore rules (each uid can only touch users/{their-own-uid}) — not by anything in this file.
 const HUSBAND_EMAIL = "luke.f.byrnes@gmail.com";
 const CAROLINE_EMAIL = "carolinebyrnes25@gmail.com";
-const ALLOWLIST = [CAROLINE_EMAIL, HUSBAND_EMAIL];
 const NAMES = { [CAROLINE_EMAIL]:"Caroline", [HUSBAND_EMAIL]:"Luke" };
 
 const fbApp = initializeApp(firebaseConfig);
@@ -831,11 +832,6 @@ function initAuth(){
  onAuthStateChanged(auth, async (u)=>{
   if(u){
     const email=(u.email||"").toLowerCase();
-    if(!ALLOWLIST.includes(email)){
-      await signOut(auth);
-      showOverlay("This tracker is limited to approved accounts. Ask Caroline to add you.", true);
-      return;
-    }
     user=u; hideOverlay();
     $("who").textContent=nameFor(email);
     await initUserData(email);
