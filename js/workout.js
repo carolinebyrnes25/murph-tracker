@@ -1,7 +1,7 @@
 import { PHASE1_SESSIONS } from "./config.js";
-import { $, diffColor, joinNames, pick, shortName } from "./util.js";
+import { $, diffColor, fmtDate, iso, joinNames, pick, shortName } from "./util.js";
 import { ORDER, PHASE1, weightedForDay } from "./plan.js";
-import { deloadActive, dlWeight, exWeight, myName, renderAll, save, state, updateDeloadAfterSession } from "./store.js";
+import { actualPace, deloadActive, dlWeight, exWeight, murphDate, myName, renderAll, save, state, updateDeloadAfterSession } from "./store.js";
 
 export let picked=null;
 export let weightFb={};   // transient per-session weight feedback: exerciseName -> "down"|"good"|"up"
@@ -160,6 +160,35 @@ export function renderProgress(){
   $("prog-left").innerHTML="Session <b>"+session+"</b> of "+PHASE1_SESSIONS+" · Week <b>"+week+"</b>";
   $("prog-right").textContent=Math.round(Math.min(done,PHASE1_SESSIONS)/PHASE1_SESSIONS*100)+"%";
   setTimeout(()=>{$("bar").style.width=Math.min(done,PHASE1_SESSIONS)/PHASE1_SESSIONS*100+"%";},50);
+  renderPaceLine();
+}
+// Target date + whether the REAL training rate is keeping up with the promised one.
+export function renderPaceLine(){
+  const el=$("pace-line"); if(!el) return;
+  const p=actualPace();
+  if(!p){ el.hidden=true; return; }            // no target date / cadence set yet
+  el.hidden=false;
+  const md=murphDate(), target=md?fmtDate(iso(md)):"";
+  const rate=v=>(Math.round(v*10)/10);
+  if(p.status==="done"){
+    el.className="pace-line on";
+    el.innerHTML="🏁 <b>Program complete.</b> Target was "+target+".";
+  }else if(p.status==="none"){
+    el.className="pace-line";
+    el.innerHTML="🎯 Target <b>"+target+"</b> · log your first session to start tracking your pace.";
+  }else if(p.status==="early"){
+    el.className="pace-line";
+    el.innerHTML="🎯 Target <b>"+target+"</b> · aiming for "+p.dpw+"×/week. Pace check unlocks after "+
+      p.daysLeft+" more day"+(p.daysLeft===1?"":"s")+" of history.";
+  }else if(p.status==="on"){
+    el.className="pace-line on";
+    el.innerHTML="✅ <b>On track for "+target+"</b> · you're training <b>"+rate(p.rate)+"×/week</b> vs the "+p.dpw+" you planned.";
+  }else{
+    el.className="pace-line behind";
+    const late=Math.max(1,p.weeksLate);
+    el.innerHTML="⚠️ <b>Behind by ~"+late+" week"+(late===1?"":"s")+".</b> At <b>"+rate(p.rate)+"×/week</b> (you planned "+p.dpw+
+      ") you'd finish "+fmtDate(iso(p.finish))+", not "+target+". Training "+p.needRate+"×/week gets you there.";
+  }
 }
 export function resetInputs(){
   picked=null;

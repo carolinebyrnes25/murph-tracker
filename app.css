@@ -190,6 +190,14 @@
   .progress-meta{display:flex;justify-content:space-between;align-items:baseline;
     font-family:"IBM Plex Mono",monospace;font-size:.74rem;color:var(--soft);margin-bottom:7px;}
   .progress-meta b{color:var(--olive);font-weight:500;}
+  /* target date + are they actually keeping the cadence they committed to */
+  .pace-line{margin-top:9px;padding:9px 11px;border-radius:10px;background:var(--card);
+    border:1px solid var(--line);font-size:.79rem;line-height:1.5;color:var(--soft);}
+  .pace-line b{color:var(--ink);}
+  .pace-line.on{border-color:var(--olive-2);background:#F2F5EA;}
+  .pace-line.on b{color:var(--olive);}
+  .pace-line.behind{border-color:var(--flag);background:#FBF1EE;}
+  .pace-line.behind b{color:var(--flag);}
   .bar{height:7px;background:var(--band);border-radius:100px;overflow:hidden;}
   .bar > i{display:block;height:100%;background:var(--olive-2);border-radius:100px;
     width:0;transition:width .6s cubic-bezier(.2,.7,.2,1);}
