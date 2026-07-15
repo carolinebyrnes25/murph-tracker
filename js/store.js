@@ -29,6 +29,31 @@ export function paceInfo(md, dpw, completedLen){
   return {weeksUntil,sessionsRemaining,weeksNeeded,weeksPerPhase,onPace,suggestedDpw};
 }
 // First-run gate: the profile + goal inputs the app personalizes around.
+// Are they ACTUALLY training as often as they said they would? paceInfo() above answers "is the
+// plan achievable"; this answers "is the plan happening", projecting a finish date from real
+// logged sessions rather than the promised cadence.
+//   status: "none"  nothing logged yet
+//           "early" too little history to project honestly (a 2-session first week would imply
+//                   an absurd rate — better to say nothing than to mislead)
+//           "done"  program complete
+//           "on"/"behind"
+const PACE_MIN_DAYS=14;
+export function actualPace(){
+  const md=murphDate(), dpw=state.daysPerWeek, done=(state.completed||[]).length;
+  if(!md || !(dpw>0)) return null;
+  if(!done) return {status:"none", dpw};
+  const remaining=Math.max(0, PROGRAM_SESSIONS-done);
+  if(!remaining) return {status:"done"};
+  const today=new Date(); today.setHours(0,0,0,0);
+  const first=new Date(state.completed.map(c=>c.date).sort()[0]); first.setHours(0,0,0,0);
+  const days=Math.round((today-first)/86400000)+1;          // inclusive of the first day
+  if(days<PACE_MIN_DAYS) return {status:"early", done, dpw, daysIn:days, daysLeft:PACE_MIN_DAYS-days};
+  const rate=done/(days/7);                                  // real sessions per week
+  const finish=new Date(today.getTime()+Math.ceil(remaining/rate)*7*86400000);
+  const weeksLate=Math.round((finish-md)/(7*86400000));
+  return {status: finish<=md ? "on" : "behind", rate, finish, weeksLate, dpw, remaining,
+          needRate: Math.min(7, Math.ceil(remaining/Math.max(0.1,(md-today)/(7*86400000)))) };
+}
 export function onboardingIncomplete(){ return !state.name || !state.gender || !state.murphDate || !(state.daysPerWeek>0) || !(state.bodyweight>0); }
 // Recommended working weight per exercise: the user's saved value, else the plan default.
 export function exWeight(e){ return (state.weights && state.weights[e.name]!=null) ? state.weights[e.name] : e.w.def; }
