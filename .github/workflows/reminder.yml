@@ -1,0 +1,26 @@
+name: Workout reminders
+
+on:
+  schedule:
+    - cron: '*/30 * * * *'   # every 30 minutes; sender matches each user's chosen time within the window
+  workflow_dispatch: {}       # allows a manual "Run workflow" for testing
+
+permissions:
+  contents: read
+
+jobs:
+  send:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Install dependencies
+        working-directory: reminder-sender
+        run: npm install --no-audit --no-fund
+      - name: Send due reminders
+        working-directory: reminder-sender
+        run: node send.js
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
