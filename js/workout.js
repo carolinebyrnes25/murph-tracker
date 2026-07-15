@@ -1,12 +1,15 @@
 import { PHASE1_SESSIONS } from "./config.js";
 import { $, diffColor, fmtDate, iso, joinNames, pick, shortName } from "./util.js";
-import { ORDER, PHASE1, weightedForDay } from "./plan.js";
-import { actualPace, deloadActive, dlWeight, exWeight, murphDate, myName, planPos, renderAll, save, state, updateAccelAfterSession, updateDeloadAfterSession } from "./store.js";
+import { ORDER, PHASE1, workoutFor } from "./plan.js";
+import { actualPace, deloadActive, dlWeight, exWeight, murphDate, myName, planPos, renderAll, save, state, updateAccelAfterSession, updateDeloadAfterSession, vestWeight } from "./store.js";
+
+// The workout for the current plan position, generated from tested capability.
+function todaysWorkout(){ return workoutFor(planPos(), state.benchmarks, vestWeight()); }
 
 export let picked=null;
 export let weightFb={};   // transient per-session weight feedback: exerciseName -> "down"|"good"|"up"
 export function buildCoachHTML(c){
-  const dayName = PHASE1[c.day] ? PHASE1[c.day].nm : ("Day "+c.day);
+  const dayName = c.nm || (PHASE1[c.day] ? PHASE1[c.day].nm : ("Day "+c.day));
   const nm=myName().replace(/</g,"&lt;");   // name is rendered via innerHTML below
   const opener = pick([
     "Nice work, "+nm+" — that's another one in the books. 💪",
@@ -73,11 +76,11 @@ export function renderRecovery(){
   const el=$("recovery-card"); if(!el) return;
   if(!state.recoveryDue){ el.hidden=true; return; }
   el.hidden=false;
-  const day=ORDER[planPos()%4];
+  const w0=todaysWorkout(); const day=w0.day;
   const reason = state.recoveryReason==="pain"
     ? "You flagged something that hurt last session."
     : "Your last session was near-maximal.";
-  $("rec-msg").innerHTML = reason+" A <b>recovery day</b> before Day "+day+" ("+PHASE1[day].nm+") is the smart call — a short walk or easy stretch, water, protein, and a good night's sleep. That's when the gains actually happen.";
+  $("rec-msg").innerHTML = reason+" A <b>recovery day</b> before Day "+day+" ("+w0.nm+") is the smart call — a short walk or easy stretch, water, protein, and a good night's sleep. That's when the gains actually happen.";
 }
 $("rec-rest").onclick=async()=>{
   state.recoveryDue=false; state.recoveryReason=null;
@@ -115,9 +118,8 @@ export function renderBanner(){
   }
 }
 export function renderNext(){
-  const done=planPos();
-  const day=ORDER[done%4];
-  const w=PHASE1[day];
+  const w=todaysWorkout();
+  const day=w.day;
   const dl=deloadActive();
   let rows=w.ex.map(e=>{
     const dose=e.w ? (e.dose+' · '+dlWeight(e)+' lb'+(dl?' <span class="deload-tag">deload</span>':'')) : e.dose;
@@ -128,8 +130,9 @@ export function renderNext(){
 }
 // Weight-feedback controls in the "Log this session" area for the current day's weighted lifts.
 export function renderWeights(){
-  const day=ORDER[planPos()%4];
-  const list=weightedForDay(day);
+  const w=todaysWorkout();
+  const day=w.day;
+  const list=(w.ex||[]).filter(e=>e.w);
   const block=$("wt-block");
   if(!list.length){ block.innerHTML=""; return; }
   if(deloadActive()){
@@ -219,9 +222,9 @@ $("complete").onclick=async()=>{
   // how many he has actually done — renderCoachNote matches on that, and the history log should
   // count real workouts, not plan slots.
   const done=planPos();
-  const day=ORDER[done%4];
+  const w0=todaysWorkout(); const day=w0.day;
   // Record the weight used per lift this session, and apply "too heavy/light" feedback to next time's recommendation.
-  const list=weightedForDay(day); const used={};
+  const list=(w0.ex||[]).filter(e=>e.w); const used={};
   if(!state.weights) state.weights={};
   const dl=deloadActive();
   const changes=[];
@@ -236,6 +239,10 @@ $("complete").onclick=async()=>{
   });
   const entry={session:state.completed.length+1,day,date:new Date().toISOString(),difficulty:picked,notes:$("notes").value.trim()};
   if(list.length) entry.weights=used;
+  // Freeze what this session actually prescribed. Phases 2-4 are generated from the CURRENT
+  // benchmark, so without this a later test would retroactively rewrite history — and milestones
+  // would tick themselves for work he never did.
+  entry.totals={...w0.totals}; entry.phase=w0.phase; entry.nm=w0.nm;
   // Generate the coach's note from this session's feedback.
   const pain=/\b(hurt|hurts|pain|painful|sharp|tweak|tweaked|strain|strained|pull(ed)?|ache|aching|joint)\b/i.test(entry.notes||"");
   state.completed.push(entry);
@@ -247,7 +254,7 @@ $("complete").onclick=async()=>{
   // Then the mirror: a run of easy sessions jumps him forward. Deload runs first so a deload that
   // just started blocks a jump in the same breath.
   const jumped=updateAccelAfterSession(pain);
-  state.coachNote={ session:entry.session, html:buildCoachHTML({day,difficulty:entry.difficulty,changes,pain,jumped}) };
+  state.coachNote={ session:entry.session, html:buildCoachHTML({day,nm:w0.nm,difficulty:entry.difficulty,changes,pain,jumped}) };
   resetInputs(); renderAll(); await save();
   const cn=$("coach-note");
   if(cn && !cn.hidden) cn.scrollIntoView({behavior:"smooth",block:"center"});

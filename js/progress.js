@@ -1,6 +1,6 @@
 import { MURPH_TARGETS } from "./config.js";
 import { $, fmtDate, fmtMile, formatMileField, iso, parseMile, shortName, todayKey } from "./util.js";
-import { PHASE1, WEIGHTED_LIFTS } from "./plan.js";
+import { PHASE1, PHASE_NAMES, WEIGHTED_LIFTS, nextGate, phaseFor, readiness } from "./plan.js";
 import { murphDate, planPos, save, state, vestWeight } from "./store.js";
 import { svgBars, svgLine, weekStart, weeklyCounts } from "./charts.js";
 
@@ -59,12 +59,27 @@ export function renderCountdownPhase(){
   }else{
     $("murph-countdown").innerHTML='<div class="countdown"><div class="big">—</div><div class="sub">set your target date on the Inputs page</div></div>';
   }
-  let segs=""; for(let i=0;i<4;i++){ segs+= i===0 ? '<div class="phase-seg"><div class="fill" style="width:'+pct+'%"></div></div>' : '<div class="phase-seg"></div>'; }
-  const cap = done>=16 ? "Phase 1 complete 🎉 — Phase 2 builds from your numbers" : "Phase 1 · Foundation — session "+Math.min(done+1,16)+" of 16";
+  // Phases are earned by TESTED capability, not by sessions counted — fill each segment
+  // accordingly and say what's still missing to reach the next one.
+  const ph=phaseFor(state.benchmarks), gate=nextGate(state.benchmarks);
+  let segs=""; for(let i=1;i<=4;i++){
+    const w = i<ph ? 100 : i===ph ? (i===1?pct:35) : 0;
+    segs+='<div class="phase-seg">'+(w?'<div class="fill" style="width:'+w+'%"></div>':'')+'</div>';
+  }
+  const LBL={pullups:"pull-ups",pushups:"push-ups",squats:"air squats",mile:"a 1-mile run"};
+  let cap="Phase "+ph+" · "+PHASE_NAMES[ph];
+  if(gate && gate.missing.length){
+    cap += " — to unlock "+gate.name+", test: "+gate.missing.map(m=>
+      m.k==="mile" ? "a 1-mile run" : (m.need+" "+(m.need===1?LBL[m.k].replace(/s$/,""):LBL[m.k])+" (best so far "+m.have+")")
+    ).join(" · ")+".";
+  } else if(!gate){ cap += " — final phase. Murph itself is on the menu."; }
   $("phase-bar").innerHTML='<div class="phase-seg-row">'+segs+'</div><div class="phase-labels"><span>Foundation</span><span>Build</span><span>Prep</span><span>Peak</span></div><div class="phase-caption">'+cap+'</div>';
 }
 // What a logged session prescribed toward Murph. Unknown days score zero rather than guessing.
 export function dayTotals(entry){
+  // Sessions logged from Phase 2+ carry the totals they were actually prescribed (frozen at log
+  // time). Fall back to the Phase 1 table for sessions logged before entry.totals existed.
+  if(entry && entry.totals) return entry.totals;
   const d=PHASE1[entry&&entry.day];
   return (d&&d.totals)||{pullups:0,pushups:0,squats:0,mile:0};
 }
