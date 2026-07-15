@@ -137,6 +137,7 @@
   .rem-day{flex:1;aspect-ratio:1;max-width:46px;border:1px solid var(--line);background:var(--paper);
     border-radius:9px;font-family:"IBM Plex Mono",monospace;font-size:.85rem;color:var(--soft);cursor:pointer;padding:0;}
   .rem-day.sel{background:var(--olive);color:#fff;border-color:transparent;font-weight:600;}
+  #gender-pills .rem-day{aspect-ratio:auto;max-width:none;padding:11px 0;font-family:"Inter",sans-serif;font-size:.9rem;font-weight:600;}
   .rem-hint{text-transform:none;letter-spacing:0;color:var(--soft);font-weight:400;}
   .rem-days-summary{font-family:"IBM Plex Mono",monospace;font-size:.74rem;color:var(--olive-2);margin-top:9px;}
   /* coach's note */
@@ -466,8 +467,19 @@
   <section class="view" id="view-inputs" hidden>
     <h2 class="view-title">Inputs</h2>
     <div class="supp-card">
-      <p class="rem-lead" id="goal-intro" hidden>👋 <b>Welcome.</b> Set your target date, weekly cadence, and weight — the app builds your plan and reminders around them.</p>
-      <h2>Your goal</h2>
+      <p class="rem-lead" id="goal-intro" hidden>👋 <b>Welcome.</b> Tell us about you and your goal — the app builds your plan, coaching, and reminders around them.</p>
+      <h2>You &amp; your goal</h2>
+      <div class="rem-field">
+        <label class="rem-label" for="name-in">Your name</label>
+        <div class="protein-input">
+          <input type="text" id="name-in" maxlength="40" placeholder="what should we call you?" autocomplete="given-name">
+        </div>
+      </div>
+      <div class="rem-field">
+        <label class="rem-label">Gender <span class="rem-hint">(sets your weighted-vest load)</span></label>
+        <div class="rem-days" id="gender-pills"></div>
+        <div class="rem-days-summary" id="vest-hint"></div>
+      </div>
       <div class="rem-field">
         <label class="rem-label" for="murph-date-in">Murph-ready by</label>
         <input type="date" id="murph-date-in">
@@ -541,7 +553,7 @@
 
     <div class="supp-card">
       <h2>Milestones</h2>
-      <p class="ms-sub">The road to Murph: <b>1-mi run · 100 pull-ups · 200 push-ups · 300 squats · 1-mi run</b>, then the 20-lb vest. Each tier is a bigger fraction of those targets. They tick themselves as your workouts and benchmark tests reach the numbers — and you can tap any of them to set it by hand.</p>
+      <p class="ms-sub">The road to Murph: <b>1-mi run · 100 pull-ups · 200 push-ups · 300 squats · 1-mi run</b>, then the <span id="vest-inline">20</span>-lb vest. Each tier is a bigger fraction of those targets. They tick themselves as your workouts and benchmark tests reach the numbers — and you can tap any of them to set it by hand.</p>
       <div id="milestones"></div>
     </div>
 
@@ -670,6 +682,10 @@ function fmtDate(isoStr){
 }
 function shortMD(key){const p=key.split("-");return parseInt(p[1])+"/"+parseInt(p[2]);}
 function nameFor(email){ return NAMES[email] || (email? email.split("@")[0] : "Athlete"); }
+// The name to greet the user by: their own choice (Inputs page) wins over the email-derived default.
+function myName(){ return (state.name && state.name.trim()) || nameFor((user&&user.email||"").toLowerCase()); }
+// Weighted-vest load for the final Murph, by gender: 20 lb (men) / 14 lb (women). Default 20.
+function vestWeight(){ return state.gender==="f" ? 14 : 20; }
 // Protein target derived from bodyweight (lb): plan calls for 0.7–1.0 g/lb.
 // "Everyday" target ≈ 0.8 g/lb; range spans 0.7–1.0.
 function proteinGoal(){ return state.bodyweight>0 ? Math.round(state.bodyweight*0.8) : null; }
@@ -693,8 +709,8 @@ function paceInfo(md, dpw, completedLen){
   const suggestedDpw=weeksUntil>0?Math.min(7,Math.ceil(sessionsRemaining/weeksUntil)):7;
   return {weeksUntil,sessionsRemaining,weeksNeeded,weeksPerPhase,onPace,suggestedDpw};
 }
-// First-run gate: the three goal inputs the app personalizes around.
-function onboardingIncomplete(){ return !state.murphDate || !(state.daysPerWeek>0) || !(state.bodyweight>0); }
+// First-run gate: the profile + goal inputs the app personalizes around.
+function onboardingIncomplete(){ return !state.name || !state.gender || !state.murphDate || !(state.daysPerWeek>0) || !(state.bodyweight>0); }
 // Recommended working weight per exercise: the user's saved value, else the plan default.
 function exWeight(e){ return (state.weights && state.weights[e.name]!=null) ? state.weights[e.name] : e.w.def; }
 function weightedForDay(day){ return PHASE1[day].ex.filter(e=>e.w); }
@@ -710,6 +726,9 @@ function normalizeState(){
   // Goal inputs (set on the Inputs page): target date + weekly training cadence.
   if(state.murphDate===undefined) state.murphDate=null;
   if(state.daysPerWeek===undefined) state.daysPerWeek=null;
+  // Profile inputs: preferred name + gender (gender sets the weighted-vest load).
+  if(state.name===undefined) state.name=null;
+  if(state.gender===undefined) state.gender=null;
 }
 
 /* ---- Coach's note: a trainer-style summary generated from the logged feedback ---- */
@@ -723,11 +742,12 @@ function joinNames(arr){
 }
 function buildCoachHTML(c){
   const dayName = PHASE1[c.day] ? PHASE1[c.day].nm : ("Day "+c.day);
+  const nm=myName().replace(/</g,"&lt;");   // name is rendered via innerHTML below
   const opener = pick([
-    "Nice work — that's another one in the books. 💪",
-    "Great job showing up and getting it done. 🙌",
-    "Logged and done — that consistency is the whole game.",
-    "Strong work today. This is how it gets built, one session at a time. 🔥"
+    "Nice work, "+nm+" — that's another one in the books. 💪",
+    "Great job showing up and getting it done, "+nm+". 🙌",
+    "Logged and done, "+nm+" — that consistency is the whole game.",
+    "Strong work today, "+nm+". This is how it gets built, one session at a time. 🔥"
   ]);
   const d=c.difficulty; let read;
   if(d<=3) read="You rated it <b>"+d+"/10</b> — comfortable, with plenty left in the tank.";
@@ -890,7 +910,7 @@ function devInit(){
   user={email:"dev@local",uid:"dev"}; userRef=null;   // userRef null => save() never hits Firestore
   let saved=null;
   try{ const raw=localStorage.getItem(DEV_KEY); if(raw) saved=JSON.parse(raw); }catch(e){}
-  state = saved || {completed:[],supps:{},plan:"murph-phase1",bodyweight:null,weights:{},murphDate:null,daysPerWeek:null};
+  state = saved || {completed:[],supps:{},plan:"murph-phase1",bodyweight:null,weights:{},name:null,gender:null,murphDate:null,daysPerWeek:null};
   normalizeState();
   hideOverlay();
   $("who").textContent="🔧 Local test (no cloud)";
@@ -904,7 +924,7 @@ async function initUserData(email){
   try{ snap=await getDoc(userRef); }catch(e){}
   if(snap && snap.exists() && Array.isArray(snap.data().completed)){
     const d=snap.data();
-    state={completed:d.completed||[], supps:d.supps||{}, plan:d.plan||"murph-phase1", bodyweight:d.bodyweight||null, weights:d.weights||{}, murphDate:d.murphDate||null, daysPerWeek:d.daysPerWeek||null, fcmTokens:d.fcmTokens||[], reminderPrefs:d.reminderPrefs||null, coachNote:d.coachNote||null, recoveryDue:!!d.recoveryDue, recoveryReason:d.recoveryReason||null, deload:d.deload||{active:false,left:0,cooldown:0}, milestones:d.milestones||{}, benchmarks:d.benchmarks||[]};
+    state={completed:d.completed||[], supps:d.supps||{}, plan:d.plan||"murph-phase1", bodyweight:d.bodyweight||null, weights:d.weights||{}, name:d.name||null, gender:d.gender||null, murphDate:d.murphDate||null, daysPerWeek:d.daysPerWeek||null, fcmTokens:d.fcmTokens||[], reminderPrefs:d.reminderPrefs||null, coachNote:d.coachNote||null, recoveryDue:!!d.recoveryDue, recoveryReason:d.recoveryReason||null, deload:d.deload||{active:false,left:0,cooldown:0}, milestones:d.milestones||{}, benchmarks:d.benchmarks||[]};
   }else{
     // New profile. Only the husband inherits the pre-cloud Session #1 backfill /
     // any log already stored on his device; everyone else starts clean.
@@ -932,7 +952,7 @@ async function save(){
   if(!DEV && userRef && user){
     try{
       await setDoc(userRef, {
-        email:user.email, name:nameFor((user.email||"").toLowerCase()),
+        email:user.email, name:state.name||null, gender:state.gender||null,
         plan:state.plan||"murph-phase1", bodyweight:state.bodyweight||null, weights:state.weights||{},
         murphDate:state.murphDate||null, daysPerWeek:state.daysPerWeek||null,
         fcmTokens:state.fcmTokens||[], reminderPrefs:state.reminderPrefs||null,
@@ -1099,6 +1119,7 @@ function renderSupps(){
 
 function render(){
   if(!ready) return;
+  if(user && !DEV) $("who").textContent=myName();   // reflect the chosen name in the drawer
   renderRecovery();renderProgress();renderNext();renderWeights();renderHist();renderSupps();renderBanner();renderProgressDash();renderInputs();renderReminders();renderCoachNote();
 }
 
@@ -1273,15 +1294,17 @@ function msToggle(id){
 }
 function renderMilestones(){
   const el=$("milestones"); if(!el) return;
+  const vi=$("vest-inline"); if(vi) vi.textContent=vestWeight();   // vest load follows gender
   el.innerHTML=MS_TIERS.map(tier=>{
     const cards=tier.items.map(m=>{
       const date=msEarned(m), done=!!date, ov=msOverridden(m);
+      const label=m.id==="murphvest" ? "Murph — "+vestWeight()+"-lb vest" : m.label;
       const sub = ov ? (done?'marked by hand':'cleared by hand')
                      : (done&&typeof date==="string" ? fmtDate(date) : m.sub);
       return '<div class="ms-card'+(done?' done':'')+' tap'+(ov?' ov':'')+(m.tgt?' tgt':'')+(m.big?' big':'')+'"'+
         ' role="button" tabindex="0" aria-pressed="'+(done?'true':'false')+'" data-id="'+m.id+'">'+
         '<div class="ms-check">'+(done?'✓':'')+'</div>'+
-        '<div class="ms-body"><div class="ms-label">'+m.icon+' '+m.label+'</div>'+
+        '<div class="ms-body"><div class="ms-label">'+m.icon+' '+label+'</div>'+
         '<div class="ms-sub2">'+sub+'</div></div></div>';
     }).join("");
     const n=tier.items.filter(m=>!!msEarned(m)).length;
@@ -1451,12 +1474,12 @@ $("reset").onclick=async()=>{
   if(!confirm("Clear your entire log (workouts + supplements)? This can't be undone."))return;
   // Clear the log; keep profile/settings (bodyweight, weights, goal inputs, reminder setup).
   state={completed:[],supps:{},plan:"murph-phase1",bodyweight:state.bodyweight||null,weights:state.weights||{},
-    murphDate:state.murphDate||null,daysPerWeek:state.daysPerWeek||null,reminderPrefs:state.reminderPrefs||null,fcmTokens:state.fcmTokens||[]};
+    name:state.name||null,gender:state.gender||null,murphDate:state.murphDate||null,daysPerWeek:state.daysPerWeek||null,reminderPrefs:state.reminderPrefs||null,fcmTokens:state.fcmTokens||[]};
   normalizeState();
   resetInputs();render();$("copy-panel").classList.remove("show");await save();
 };
 $("copy").onclick=async()=>{
-  let txt="Murph Tracker — "+nameFor((user&&user.email||"").toLowerCase())+"'s session log:\n";
+  let txt="Murph Tracker — "+myName()+"'s session log:\n";
   if(state.bodyweight>0){ const rg=proteinRange(); txt+="Bodyweight: "+state.bodyweight+" lb · protein target ~"+proteinGoal()+" g/day (range "+rg[0]+"–"+rg[1]+")\n"; }
   if(state.completed.length){
     state.completed.forEach(c=>{
@@ -1508,8 +1531,15 @@ function updateDaySummary(){
   else if(sel.length){ el.textContent="On: "+sel.map(i=>DAY_NAMES[i]).join(" · "); }
   else{ el.textContent="No days selected — pick at least one."; }
 }
-/* ---------------- Inputs page: goal (target date · days/week · weight) ---------------- */
+/* ---------------- Inputs page: profile (name · gender) + goal (date · days/week · weight) ---------------- */
 function dpwSelected(){ const el=$("dpw-pills"); if(!el) return null; const b=el.querySelector(".rem-day.sel"); return b?+b.dataset.d:null; }
+function genderSelected(){ const el=$("gender-pills"); if(!el) return null; const b=el.querySelector(".rem-day.sel"); return b?b.dataset.g:null; }
+// Reflect the vest load implied by the currently-selected gender (previews before save).
+function updateVestHint(){
+  const el=$("vest-hint"); if(!el) return;
+  const g=genderSelected();
+  el.textContent = g ? ("Your final Murph uses a "+(g==="f"?14:20)+"-lb vest.") : "";
+}
 // Live pace read-out from whatever is currently in the inputs (saved or not).
 function updatePaceReadout(){
   const cap=$("pace-readout"); if(!cap) return;
@@ -1528,8 +1558,18 @@ function updatePaceReadout(){
 function renderInputs(){
   const el=$("dpw-pills"); if(!el) return;
   $("goal-intro").hidden = !onboardingIncomplete();
+  const ni=$("name-in"); if(document.activeElement!==ni) ni.value=state.name||"";
   const di=$("murph-date-in"); if(document.activeElement!==di) di.value=state.murphDate||"";
   const wi=$("weight-in"); if(document.activeElement!==wi) wi.value=state.bodyweight>0?state.bodyweight:"";
+  // gender pills
+  const gEl=$("gender-pills");
+  gEl.innerHTML=[["m","Male"],["f","Female"]].map(([g,lbl])=>'<button type="button" class="rem-day'+(state.gender===g?" sel":"")+'" data-g="'+g+'">'+lbl+'</button>').join("");
+  gEl.querySelectorAll(".rem-day").forEach(b=>{ b.onclick=()=>{
+    gEl.querySelectorAll(".rem-day").forEach(x=>x.classList.remove("sel"));
+    b.classList.add("sel"); updateVestHint();
+  }; });
+  updateVestHint();
+  // days-per-week pills
   const sel=state.daysPerWeek;
   el.innerHTML=[1,2,3,4,5,6,7].map(n=>'<button type="button" class="rem-day'+(sel===n?" sel":"")+'" data-d="'+n+'">'+n+'</button>').join("");
   el.querySelectorAll(".rem-day").forEach(b=>{ b.onclick=()=>{
@@ -1592,6 +1632,8 @@ $("rem-save").onclick=async()=>{
 // Live-preview the pace read-out as the date/weight fields change (pills handle their own).
 $("murph-date-in").oninput=updatePaceReadout;
 $("goal-save").onclick=async()=>{
+  const nm=$("name-in").value.trim(); state.name = nm || null;
+  state.gender = genderSelected();
   const d=$("murph-date-in").value; state.murphDate = /^\d{4}-\d{2}-\d{2}$/.test(d) ? d : null;
   state.daysPerWeek = dpwSelected();
   const w=parseInt($("weight-in").value,10); state.bodyweight = (!isNaN(w)&&w>0) ? w : null;
