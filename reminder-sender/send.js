@@ -15,13 +15,19 @@ const SITE = 'https://carolinebyrnes25.github.io/murph-tracker/';
 const WINDOW = 30; // minutes; must match the cron cadence
 
 (async () => {
+  console.log('Run at ' + DateTime.now().setZone('America/New_York').toFormat("ccc yyyy-LL-dd HH:mm") + ' ET');
   const snap = await db.collection('users').get();
   const targets = []; // { uid, token }
+  console.log(`Scanning ${snap.size} user profile(s).`);
 
   for (const docSnap of snap.docs) {
     const u = docSnap.data();
     const p = u.reminderPrefs;
     const tokens = Array.isArray(u.fcmTokens) ? u.fcmTokens : [];
+    // Diagnostic summary (no email/token values, just config) to debug reminder delivery.
+    if (p || tokens.length) {
+      console.log(`profile ${docSnap.id.slice(0,6)}… enabled=${!!(p && p.enabled)} days=${p && p.days ? JSON.stringify(p.days) : '-'} time=${p ? p.time : '-'} tz=${p ? p.tz : '-'} tokens=${tokens.length}`);
+    }
     if (!p || !p.enabled || tokens.length === 0) continue;
 
     const tz = p.tz || 'America/New_York';
