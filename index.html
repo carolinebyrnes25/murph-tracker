@@ -67,6 +67,64 @@
   .wchart .ax{font-family:"IBM Plex Mono",monospace;font-size:11px;fill:var(--soft);}
   .wchart-meta{font-family:"IBM Plex Mono",monospace;font-size:.78rem;color:var(--soft);margin-top:10px;text-align:center;}
   .wchart-meta b{color:var(--olive);}
+  /* progress dashboard */
+  .bar{fill:var(--olive-2);}
+  .barval{font-family:"IBM Plex Mono",monospace;font-size:11px;fill:var(--soft);}
+  .avgline{stroke:var(--flag);stroke-width:1;stroke-dasharray:4 3;opacity:.65;}
+  .countdown{text-align:center;margin-bottom:14px;}
+  .countdown .big{font-family:"Barlow Condensed",sans-serif;font-weight:700;font-size:2.6rem;color:var(--olive);line-height:1;}
+  .countdown .sub{font-family:"IBM Plex Mono",monospace;font-size:.66rem;letter-spacing:.14em;text-transform:uppercase;color:var(--soft);margin-top:4px;}
+  .phase-seg-row{display:flex;gap:6px;}
+  .phase-seg{flex:1;height:9px;border-radius:100px;background:var(--band);position:relative;overflow:hidden;}
+  .phase-seg .fill{position:absolute;inset:0 auto 0 0;background:var(--olive-2);border-radius:100px;}
+  .phase-labels{display:flex;justify-content:space-between;font-family:"IBM Plex Mono",monospace;font-size:.58rem;letter-spacing:.04em;text-transform:uppercase;color:var(--soft);margin-top:6px;}
+  .phase-caption{text-align:center;font-family:"IBM Plex Mono",monospace;font-size:.72rem;color:var(--olive);margin-top:10px;}
+  .stat-row{display:flex;gap:10px;margin-bottom:16px;}
+  .stat{flex:1;background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:12px 8px;text-align:center;}
+  .stat .n{font-family:"Barlow Condensed",sans-serif;font-weight:700;font-size:1.9rem;color:var(--olive);line-height:1;}
+  .stat .l{font-family:"IBM Plex Mono",monospace;font-size:.58rem;letter-spacing:.06em;text-transform:uppercase;color:var(--soft);margin-top:5px;}
+  /* milestones — tiered grid, climbing by fraction of each Murph target */
+  .ms-tier{margin-top:15px;}
+  .ms-tier:first-child{margin-top:4px;}
+  .ms-tier-h{display:flex;align-items:center;gap:9px;margin-bottom:8px;font-family:"Barlow Condensed",sans-serif;
+    font-weight:700;text-transform:uppercase;letter-spacing:.07em;font-size:.86rem;color:var(--olive);}
+  .ms-tier-h::after{content:"";flex:1;height:1px;background:var(--line);order:1;}
+  .ms-tier-n{order:2;font-family:"IBM Plex Mono",monospace;font-size:.68rem;color:var(--soft);letter-spacing:0;}
+  /* min must stay small enough for 2 columns on a 375px phone — a 1-column grid is just a list again */
+  .ms-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(128px,1fr));gap:8px;}
+  .ms-card{display:flex;align-items:flex-start;gap:8px;padding:9px;border:1px solid var(--line);
+    border-radius:11px;background:var(--paper);}
+  .ms-card.tap{cursor:pointer;}
+  .ms-card.tap:hover{border-color:var(--olive-2);}
+  .ms-card.tap:focus-visible{outline:2px solid var(--olive-2);outline-offset:2px;}
+  .ms-card.done{background:var(--card);border-color:var(--olive-2);}
+  .ms-card.tgt{border-style:dashed;}
+  .ms-check{width:22px;height:22px;flex:none;border-radius:7px;border:2px solid var(--line);display:flex;
+    align-items:center;justify-content:center;font-size:.72rem;font-weight:700;color:#fff;}
+  .ms-card.done .ms-check{background:var(--olive);border-color:transparent;}
+  .ms-body{min-width:0;}
+  .ms-label{font-weight:600;font-size:.84rem;line-height:1.3;}
+  .ms-card.big .ms-label,.ms-card.tgt .ms-label{color:var(--olive);}
+  .ms-sub2{font-family:"IBM Plex Mono",monospace;font-size:.63rem;color:var(--soft);margin-top:2px;}
+  .ms-card.done .ms-sub2{color:var(--olive-2);}
+  .ms-sub{font-size:.82rem;color:var(--soft);line-height:1.45;margin:0 0 8px;}
+  .ms-sub b{color:var(--olive);font-weight:600;}
+  .lift-sel{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px;}
+  .lift-sel button{border:1px solid var(--line);background:var(--paper);border-radius:100px;padding:6px 11px;
+    font-family:"IBM Plex Mono",monospace;font-size:.68rem;color:var(--soft);cursor:pointer;}
+  .lift-sel button.sel{background:var(--olive);color:#fff;border-color:transparent;}
+  .bench-latest{font-family:"IBM Plex Mono",monospace;font-size:.68rem;letter-spacing:.06em;text-transform:uppercase;color:var(--soft);margin:4px 0 12px;}
+  .rbar-row{margin:12px 0;}
+  .rbar-top{display:flex;justify-content:space-between;align-items:baseline;font-size:.9rem;font-weight:600;margin-bottom:5px;}
+  .rbar-top .rbar-val{font-family:"IBM Plex Mono",monospace;font-size:.82rem;color:var(--olive);font-weight:500;}
+  .rbar{height:9px;background:var(--band);border-radius:100px;overflow:hidden;}
+  .rbar>i{display:block;height:100%;background:var(--olive-2);border-radius:100px;transition:width .5s;}
+  .bench-fields{display:flex;flex-direction:column;gap:12px;margin:16px 0;}
+  .bench-fields label{display:flex;justify-content:space-between;align-items:center;gap:12px;font-weight:600;font-size:.92rem;}
+  .bench-fields input{width:130px;border:1px solid var(--line);border-radius:10px;background:var(--paper);font-family:"Inter",sans-serif;font-size:1rem;padding:10px 12px;color:var(--ink);}
+  .bench-actions{display:flex;flex-direction:column;gap:10px;}
+  .bf-msg{font-family:"IBM Plex Mono",monospace;font-size:.72rem;color:var(--flag);margin-top:8px;min-height:1em;}
+  #bench-log-btn{margin-top:6px;}
   .chart-empty{color:var(--soft);font-size:.9rem;margin:4px 0;}
   /* reminders */
   .rem-lead{font-size:.95rem;color:var(--ink);margin:0 0 16px;}
@@ -423,15 +481,64 @@
     </div>
   </section>
 
-  <!-- PROGRESS TRACKER (placeholder — real feature later) -->
+  <!-- PROGRESS TRACKER -->
   <section class="view" id="view-progress" hidden>
     <h2 class="view-title">Progress tracker</h2>
+
+    <div class="supp-card">
+      <div id="murph-countdown"></div>
+      <div id="phase-bar"></div>
+    </div>
+
+    <div class="supp-card">
+      <h2>Benchmark tests</h2>
+      <p class="ms-sub">Test your max reps + mile time now and then — see how close you are to Murph, and watch it climb.</p>
+      <div id="bench-readiness"></div>
+      <div class="lift-sel" id="bench-controls"></div>
+      <div id="bench-chart"></div>
+      <button class="mini" id="bench-log-btn">＋ Log a test</button>
+      <div id="bench-form" hidden>
+        <div class="bench-fields">
+          <label>Date <input type="date" id="bf-date"></label>
+          <label>Pull-ups <input type="number" id="bf-pull" min="0" max="500" inputmode="numeric" placeholder="max"></label>
+          <label>Push-ups <input type="number" id="bf-push" min="0" max="1000" inputmode="numeric" placeholder="max"></label>
+          <label>Air squats <input type="number" id="bf-squat" min="0" max="1000" inputmode="numeric" placeholder="max"></label>
+          <label>1-mile time <input type="text" id="bf-mile" inputmode="numeric" placeholder="8:30"></label>
+        </div>
+        <div class="bench-actions">
+          <button class="complete" id="bf-save">Save test</button>
+          <button class="mini" id="bf-cancel">Cancel</button>
+        </div>
+        <div class="bf-msg" id="bf-msg"></div>
+      </div>
+    </div>
+
+    <div class="supp-card">
+      <h2>Milestones</h2>
+      <p class="ms-sub">The road to Murph: <b>1-mi run · 100 pull-ups · 200 push-ups · 300 squats · 1-mi run</b>, then the 20-lb vest. Each tier is a bigger fraction of those targets. They tick themselves as your workouts and benchmark tests reach the numbers — the big three at the end are yours to tap.</p>
+      <div id="milestones"></div>
+    </div>
+
+    <div class="supp-card">
+      <h2>Consistency</h2>
+      <div id="consistency-stats"></div>
+      <div id="weekly-chart"></div>
+    </div>
+
+    <div class="supp-card">
+      <h2>Effort trend</h2>
+      <div id="difficulty-chart"></div>
+    </div>
+
+    <div class="supp-card">
+      <h2>Strength</h2>
+      <div class="lift-sel" id="strength-controls"></div>
+      <div id="strength-chart"></div>
+    </div>
+
     <div class="supp-card">
       <h2>Bodyweight</h2>
       <div id="weight-chart"></div>
-    </div>
-    <div class="card placeholder">
-      <p>More charts — difficulty, training volume, and weights lifted over time — coming soon.</p>
     </div>
   </section>
 
@@ -470,27 +577,33 @@ try{ db = initializeFirestore(fbApp, { localCache: persistentLocalCache({}) }); 
 catch(e){ db = getFirestore(fbApp); }
 
 // ---- Plan data ----
+// `totals` = what the day prescribes toward Murph, and it drives the milestone auto-checks.
+// Only the real movement counts: band-assisted pull-ups, incline/knee push-ups and lat pulldowns
+// build toward Murph but aren't Murph reps, so they score 0. Weighted squats aren't air squats.
+// `mile` = continuous 1-mile runs prescribed (jog/walk intervals aren't a mile).
+// Phase 1 tops out at 50 air squats and no unassisted pull-ups or push-ups — by design, nothing
+// here trips a milestone. Give later phases the same `totals` and their milestones check themselves.
 const PHASE1 = {
-  A:{nm:"Pull + Run base",tag:"Pulling pattern · easy running",ex:[
+  A:{nm:"Pull + Run base",tag:"Pulling pattern · easy running",totals:{pullups:0,pushups:0,squats:0,mile:0},ex:[
     {name:"Dead hang",dose:"3 × 15–20s"},
     {name:"Inverted row (barbell/TRX)",dose:"3 × 8–10",note:"More upright = easier · more horizontal = harder"},
     {name:"Lat pulldown or assisted pull-up",dose:"3 × 8–10",w:{def:100,step:10}},
     {name:"Incline push-ups",dose:"3 × 8–12"},
     {name:"Run / walk",dose:"15 min",note:"Jog 1 min / walk 2 min"}]},
-  B:{nm:"Squat + Intervals",tag:"Legs · interval running",ex:[
+  B:{nm:"Squat + Intervals",tag:"Legs · interval running",totals:{pullups:0,pushups:0,squats:45,mile:0},ex:[
     {name:"Goblet squat",dose:"3 × 10",w:{def:25,step:5}},
     {name:"Bodyweight squats",dose:"3 × 15",note:"Hip crease below the knee"},
     {name:"Walking lunges",dose:"2 × 10 / leg"},
     {name:"DB Romanian deadlift",dose:"2 × 10",w:{def:30,step:5}},
     {name:"Run / walk intervals",dose:"12–15 min",note:"Jog 1 min / walk 1–2 min"},
     {name:"Plank",dose:"3 × 20–30s"}]},
-  C:{nm:"Push + Pull",tag:"Pressing · more pulling volume",ex:[
+  C:{nm:"Push + Pull",tag:"Pressing · more pulling volume",totals:{pullups:0,pushups:0,squats:0,mile:0},ex:[
     {name:"DB bench press (or incline push-ups)",dose:"3 × 8–10",w:{def:30,step:5}},
     {name:"Band-assisted pull-ups",dose:"3 × 5–8",note:"A band that lets you do clean reps"},
     {name:"Inverted row (barbell/TRX)",dose:"3 × 10"},
     {name:"Incline / knee push-ups",dose:"3 × clean",note:"Leave 2 in the tank"},
     {name:"Overhead DB press",dose:"2 × 10",w:{def:20,step:5}}]},
-  D:{nm:"Mixed conditioning",tag:"A first taste of Murph",ex:[
+  D:{nm:"Mixed conditioning",tag:"A first taste of Murph",totals:{pullups:0,pushups:0,squats:50,mile:0},ex:[
     {name:"Easy jog",dose:"5 min"},
     {name:"Circuit — unhurried",dose:"5 rounds",note:"2 assisted pull-ups · 5 incline push-ups · 10 squats"},
     {name:"Continuous jog",dose:"0.5 → 0.75 mi",note:"Walk when needed; nudge the distance up"}]}
@@ -549,6 +662,8 @@ function normalizeState(){
   if(typeof state.recoveryDue!=="boolean") state.recoveryDue=false;
   if(state.recoveryReason===undefined) state.recoveryReason=null;
   if(!state.deload) state.deload={active:false,left:0,cooldown:0};
+  if(!state.milestones) state.milestones={};
+  if(!state.benchmarks) state.benchmarks=[];
   // migrate a pre-existing single bodyweight into the dated weight log
   if(state.bodyweight>0 && !state.weightLog.length) state.weightLog=[{date:todayKey(),lb:state.bodyweight}];
 }
@@ -749,7 +864,7 @@ async function initUserData(email){
   try{ snap=await getDoc(userRef); }catch(e){}
   if(snap && snap.exists() && Array.isArray(snap.data().completed)){
     const d=snap.data();
-    state={completed:d.completed||[], supps:d.supps||{}, plan:d.plan||"murph-phase1", bodyweight:d.bodyweight||null, weights:d.weights||{}, weightLog:d.weightLog||[], fcmTokens:d.fcmTokens||[], reminderPrefs:d.reminderPrefs||null, coachNote:d.coachNote||null, recoveryDue:!!d.recoveryDue, recoveryReason:d.recoveryReason||null, deload:d.deload||{active:false,left:0,cooldown:0}};
+    state={completed:d.completed||[], supps:d.supps||{}, plan:d.plan||"murph-phase1", bodyweight:d.bodyweight||null, weights:d.weights||{}, weightLog:d.weightLog||[], fcmTokens:d.fcmTokens||[], reminderPrefs:d.reminderPrefs||null, coachNote:d.coachNote||null, recoveryDue:!!d.recoveryDue, recoveryReason:d.recoveryReason||null, deload:d.deload||{active:false,left:0,cooldown:0}, milestones:d.milestones||{}, benchmarks:d.benchmarks||[]};
   }else{
     // New profile. Only the husband inherits the pre-cloud Session #1 backfill /
     // any log already stored on his device; everyone else starts clean.
@@ -780,7 +895,8 @@ async function save(){
         plan:state.plan||"murph-phase1", bodyweight:state.bodyweight||null, weights:state.weights||{},
         weightLog:state.weightLog||[], fcmTokens:state.fcmTokens||[], reminderPrefs:state.reminderPrefs||null,
         coachNote:state.coachNote||null, recoveryDue:!!state.recoveryDue, recoveryReason:state.recoveryReason||null,
-        deload:state.deload||{active:false,left:0,cooldown:0}, completed:state.completed, supps:state.supps, updatedAt:Date.now()
+        deload:state.deload||{active:false,left:0,cooldown:0}, milestones:state.milestones||{}, benchmarks:state.benchmarks||[],
+        completed:state.completed, supps:state.supps, updatedAt:Date.now()
       }, {merge:true});
     }catch(e){ console.warn("cloud save failed (will retry when online):", e); }
   }
@@ -912,7 +1028,7 @@ function renderSupps(){
 
 function render(){
   if(!ready) return;
-  renderRecovery();renderProgress();renderNext();renderWeights();renderHist();renderSupps();renderBanner();renderWeightChart();renderReminders();renderCoachNote();
+  renderRecovery();renderProgress();renderNext();renderWeights();renderHist();renderSupps();renderBanner();renderProgressDash();renderReminders();renderCoachNote();
 }
 
 // Bodyweight-over-time line chart for the Progress tracker view.
@@ -947,6 +1063,251 @@ function renderWeightChart(){
       '<text x="'+x(log.length-1)+'" y="'+(H-9)+'" text-anchor="end" class="ax">'+md(log[log.length-1].date)+'</text>'+
     '</svg>'+
     '<div class="wchart-meta"><b>'+cur+' lb</b> now · '+deltaStr+'</div>';
+}
+
+/* ===================== Progress dashboard ===================== */
+const MURPH_DATE=new Date(2026,11,31);
+const WEIGHTED_LIFTS=["Lat pulldown or assisted pull-up","Goblet squat","DB Romanian deadlift","DB bench press (or incline push-ups)","Overhead DB press"];
+let selectedLift=WEIGHTED_LIFTS[0];
+// The road to Murph — capability checkpoints tied to the real requirements
+// (1-mi run · 100 pull-ups · 200 push-ups · 300 squats · 1-mi run · 20-lb vest).
+// Tiers climb by fraction of each Murph target: 1/3 → 1/2 → 2/3 → full, with Half-Murph
+// sitting at the halfway tier. `need` is checked automatically against prescribed workout
+// totals and benchmark tests; `big` ones are once-in-a-lifetime and stay tap-to-mark.
+const MS_TIERS=[
+  {label:"Foundation",items:[
+    {id:"phase1",icon:"🧱",label:"Phase 1 complete",sub:"16 sessions",
+     auto:s=>s.completed.length>=16, autoDate:s=>s.completed[15]&&s.completed[15].date},
+    {id:"mile1",icon:"🏃",label:"Run 1 mile",sub:"without stopping",need:{mile:1}}
+  ]},
+  {label:"One third",items:[
+    {id:"pull33",icon:"💪",label:"33 pull-ups",sub:"in a workout",need:{pullups:33}},
+    {id:"push66",icon:"🙌",label:"66 push-ups",sub:"in a workout",need:{pushups:66}},
+    {id:"squat100",icon:"🦵",label:"100 air squats",sub:"in a workout",need:{squats:100}}
+  ]},
+  {label:"Halfway",items:[
+    {id:"pull50",icon:"💪",label:"50 pull-ups",sub:"in a workout",need:{pullups:50}},
+    {id:"push100",icon:"🙌",label:"100 push-ups",sub:"in a workout",need:{pushups:100}},
+    {id:"squat150",icon:"🦵",label:"150 air squats",sub:"in a workout",need:{squats:150}},
+    {id:"half",icon:"🔥",label:"Half-Murph",sub:"tap when you do it",big:true}
+  ]},
+  {label:"Two thirds",items:[
+    {id:"pull66",icon:"💪",label:"66 pull-ups",sub:"in a workout",need:{pullups:66}},
+    {id:"push133",icon:"🙌",label:"133 push-ups",sub:"in a workout",need:{pushups:133}},
+    {id:"squat200",icon:"🦵",label:"200 air squats",sub:"in a workout",need:{squats:200}}
+  ]},
+  {label:"Murph targets",items:[
+    {id:"pull100",icon:"💪",label:"100 pull-ups",sub:"Murph target",need:{pullups:100},tgt:true},
+    {id:"push200",icon:"🙌",label:"200 push-ups",sub:"Murph target",need:{pushups:200},tgt:true},
+    {id:"squat300",icon:"🦵",label:"300 air squats",sub:"Murph target",need:{squats:300},tgt:true}
+  ]},
+  {label:"Putting it together",items:[
+    {id:"mile2",icon:"🏃",label:"Two 1-mile runs",sub:"in one session",need:{mile:2}},
+    {id:"combo_run_pull",icon:"🏃💪",label:"1-mi run + 100 pull-ups",sub:"in a workout",need:{mile:1,pullups:100}},
+    {id:"combo_run_pull_push",icon:"💪🙌",label:"Run + 100 pull + 200 push",sub:"in a workout",need:{mile:1,pullups:100,pushups:200}},
+    {id:"combo_reps",icon:"⚡",label:"All the reps",sub:"100 · 200 · 300, no runs",need:{pullups:100,pushups:200,squats:300}}
+  ]},
+  {label:"The finish",items:[
+    {id:"murph",icon:"🏁",label:"Murph — unweighted",sub:"tap when you do it",big:true},
+    {id:"murphvest",icon:"🎖️",label:"Murph — 20-lb vest",sub:"tap when you do it",big:true}
+  ]}
+];
+
+// --- generic SVG chart builders (single-series, app palette) ---
+function svgLine(el, pts, opts){
+  opts=opts||{};
+  if(pts.length<2){ el.innerHTML='<p class="chart-empty">'+(opts.empty||"Log a couple more sessions to see this trend.")+'</p>'; return; }
+  const W=520,H=200,L=38,R=14,T=14,B=28;
+  const ys=pts.map(p=>p.y);
+  let lo=opts.yMin!=null?opts.yMin:Math.min(...ys), hi=opts.yMax!=null?opts.yMax:Math.max(...ys);
+  if(lo===hi){lo-=1;hi+=1;} else if(opts.yMin==null&&opts.yMax==null){const pad=(hi-lo)*0.15;lo-=pad;hi+=pad;}
+  const x=i=>L+(W-L-R)*(i/(pts.length-1));
+  const y=v=>T+(H-T-B)*(1-(v-lo)/(hi-lo));
+  const line="M"+pts.map((p,i)=>x(i).toFixed(1)+","+y(p.y).toFixed(1)).join(" L");
+  const area="M"+x(0).toFixed(1)+","+(H-B)+" L"+pts.map((p,i)=>x(i).toFixed(1)+","+y(p.y).toFixed(1)).join(" L")+" L"+x(pts.length-1).toFixed(1)+","+(H-B)+" Z";
+  const fmt=opts.fmt||(v=>Math.round(v));
+  const dots=pts.map((p,i)=>'<circle cx="'+x(i).toFixed(1)+'" cy="'+y(p.y).toFixed(1)+'" r="3" fill="var(--olive)"><title>'+p.label+': '+fmt(p.y)+(opts.unit||'')+'</title></circle>').join("");
+  let avg="";
+  if(opts.avg!=null){ const ay=y(opts.avg); avg='<line x1="'+L+'" y1="'+ay.toFixed(1)+'" x2="'+(W-R)+'" y2="'+ay.toFixed(1)+'" class="avgline"/><text x="'+(W-R)+'" y="'+(ay-4).toFixed(1)+'" text-anchor="end" class="ax">avg '+fmt(opts.avg)+'</text>'; }
+  el.innerHTML='<svg viewBox="0 0 '+W+' '+H+'" class="wchart" role="img">'+
+    '<line x1="'+L+'" y1="'+(H-B)+'" x2="'+(W-R)+'" y2="'+(H-B)+'" class="grid"/>'+
+    '<path d="'+area+'" class="warea"/><path d="'+line+'" class="wline"/>'+avg+dots+
+    '<text x="'+(L-6)+'" y="'+(T+4)+'" text-anchor="end" class="ax">'+fmt(hi)+'</text>'+
+    '<text x="'+(L-6)+'" y="'+(H-B)+'" text-anchor="end" class="ax">'+fmt(lo)+'</text>'+
+    '<text x="'+L+'" y="'+(H-9)+'" text-anchor="start" class="ax">'+pts[0].label+'</text>'+
+    '<text x="'+(W-R)+'" y="'+(H-9)+'" text-anchor="end" class="ax">'+pts[pts.length-1].label+'</text>'+
+  '</svg>';
+}
+function svgBars(el, data, opts){
+  opts=opts||{};
+  if(!data.length){ el.innerHTML='<p class="chart-empty">No sessions logged yet.</p>'; return; }
+  const W=520,H=180,L=20,R=12,T=16,B=26;
+  const hi=Math.max(1, ...data.map(d=>d.value));
+  const n=data.length, slot=(W-L-R)/n, bw=slot*0.6;
+  const y=v=>T+(H-T-B)*(1-v/hi);
+  const bars=data.map((d,i)=>{
+    const cx=L+slot*i+slot/2, x=cx-bw/2, yy=y(d.value), h=(H-B)-yy;
+    const val=d.value>0?'<text x="'+cx.toFixed(1)+'" y="'+(yy-5).toFixed(1)+'" text-anchor="middle" class="barval">'+d.value+'</text>':'';
+    return '<rect x="'+x.toFixed(1)+'" y="'+yy.toFixed(1)+'" width="'+bw.toFixed(1)+'" height="'+Math.max(0,h).toFixed(1)+'" rx="4" class="bar"><title>Week of '+d.label+': '+d.value+' session'+(d.value===1?'':'s')+'</title></rect>'+val+
+      '<text x="'+cx.toFixed(1)+'" y="'+(H-9)+'" text-anchor="middle" class="ax">'+d.label+'</text>';
+  }).join("");
+  el.innerHTML='<svg viewBox="0 0 '+W+' '+H+'" class="wchart" role="img"><line x1="'+L+'" y1="'+(H-B)+'" x2="'+(W-R)+'" y2="'+(H-B)+'" class="grid"/>'+bars+'</svg>';
+}
+
+// --- data helpers ---
+function weekStart(d){ const x=new Date(d); x.setHours(0,0,0,0); x.setDate(x.getDate()-x.getDay()); return x; } // Sunday
+function weeklyCounts(maxN){
+  if(!state.completed.length) return [];
+  const cur=weekStart(new Date());
+  const first=weekStart(state.completed.map(c=>c.date).sort()[0]);
+  let n=Math.round((cur-first)/(7*86400000))+1;         // weeks from first session to now
+  n=Math.min(Math.max(n,1), maxN||8);                    // at least 1, at most maxN (show the recent window)
+  const weeks=[];
+  for(let i=n-1;i>=0;i--){ const w=new Date(cur); w.setDate(cur.getDate()-i*7); weeks.push({t:w.getTime(),label:(w.getMonth()+1)+"/"+w.getDate(),value:0}); }
+  const idx={}; weeks.forEach((w,i)=>idx[w.t]=i);
+  state.completed.forEach(c=>{ const t=weekStart(c.date).getTime(); if(idx[t]!=null) weeks[idx[t]].value++; });
+  return weeks;
+}
+
+// --- renderers ---
+function renderCountdownPhase(){
+  if(!$("murph-countdown")) return;
+  const days=Math.max(0,Math.ceil((MURPH_DATE-new Date())/86400000));
+  const done=state.completed.length, p1=Math.min(done,16), pct=Math.round(p1/16*100);
+  $("murph-countdown").innerHTML='<div class="countdown"><div class="big">'+days+'</div><div class="sub">days to Murph · Dec 31</div></div>';
+  let segs=""; for(let i=0;i<4;i++){ segs+= i===0 ? '<div class="phase-seg"><div class="fill" style="width:'+pct+'%"></div></div>' : '<div class="phase-seg"></div>'; }
+  const cap = done>=16 ? "Phase 1 complete 🎉 — Phase 2 builds from your numbers" : "Phase 1 · Foundation — session "+Math.min(done+1,16)+" of 16";
+  $("phase-bar").innerHTML='<div class="phase-seg-row">'+segs+'</div><div class="phase-labels"><span>Foundation</span><span>Build</span><span>Prep</span><span>Peak</span></div><div class="phase-caption">'+cap+'</div>';
+}
+// What a logged session prescribed toward Murph. Unknown days score zero rather than guessing.
+function dayTotals(entry){
+  const d=PHASE1[entry&&entry.day];
+  return (d&&d.totals)||{pullups:0,pushups:0,squats:0,mile:0};
+}
+// A benchmark test is evidence too: a tested max of 100 pull-ups earns the 100 pull-up milestone.
+// A recorded mile time means he ran a mile that day; a test can't show two.
+function benchTotals(b){
+  return {pullups:b.pullups||0, pushups:b.pushups||0, squats:b.squats||0, mile:b.mileSec!=null?1:0};
+}
+function meetsNeed(totals,need){ return Object.keys(need).every(k=>(totals[k]||0)>=need[k]); }
+// Earliest date this milestone was earned, or null. Manual ones read state.milestones.
+function msEarned(m){
+  if(m.auto) return m.auto(state) ? ((m.autoDate&&m.autoDate(state))||true) : null;
+  if(!m.need) return (state.milestones||{})[m.id]||null;
+  let best=null;
+  const take=k=>{ if(k&&(!best||k<best)) best=k; };
+  (state.completed||[]).forEach(c=>{ if(meetsNeed(dayTotals(c),m.need)) take(iso(new Date(c.date))); });
+  (state.benchmarks||[]).forEach(b=>{ if(meetsNeed(benchTotals(b),m.need)) take(b.date); });
+  return best;
+}
+function renderMilestones(){
+  const el=$("milestones"); if(!el) return;
+  el.innerHTML=MS_TIERS.map(tier=>{
+    const cards=tier.items.map(m=>{
+      const date=msEarned(m), done=!!date, tap=!m.auto&&!m.need;
+      return '<div class="ms-card'+(done?' done':'')+(tap?' tap':'')+(m.tgt?' tgt':'')+(m.big?' big':'')+'"'+
+        (tap?' role="button" tabindex="0"':'')+' data-id="'+m.id+'">'+
+        '<div class="ms-check">'+(done?'✓':'')+'</div>'+
+        '<div class="ms-body"><div class="ms-label">'+m.icon+' '+m.label+'</div>'+
+        '<div class="ms-sub2">'+(done&&typeof date==="string"?fmtDate(date):m.sub)+'</div></div></div>';
+    }).join("");
+    const n=tier.items.filter(m=>!!msEarned(m)).length;
+    return '<div class="ms-tier"><div class="ms-tier-h"><span>'+tier.label+'</span>'+
+      '<span class="ms-tier-n">'+n+'/'+tier.items.length+'</span></div>'+
+      '<div class="ms-grid">'+cards+'</div></div>';
+  }).join("");
+  const toggle=async id=>{
+    if(!state.milestones) state.milestones={};
+    if(state.milestones[id]) delete state.milestones[id]; else state.milestones[id]=todayKey();
+    renderMilestones(); await save();
+  };
+  el.querySelectorAll(".ms-card.tap").forEach(card=>{
+    card.onclick=()=>toggle(card.dataset.id);
+    card.onkeydown=e=>{ if(e.key==="Enter"||e.key===" "){ e.preventDefault(); toggle(card.dataset.id); } };
+  });
+}
+function renderConsistency(){
+  if(!$("consistency-stats")) return;
+  const counts={}; state.completed.forEach(c=>{ const t=weekStart(c.date).getTime(); counts[t]=(counts[t]||0)+1; });
+  const best=Math.max(0,...Object.values(counts)), thisWk=counts[weekStart(new Date()).getTime()]||0;
+  $("consistency-stats").innerHTML='<div class="stat-row">'+
+    '<div class="stat"><div class="n">'+state.completed.length+'</div><div class="l">Total sessions</div></div>'+
+    '<div class="stat"><div class="n">'+thisWk+'</div><div class="l">This week</div></div>'+
+    '<div class="stat"><div class="n">'+best+'</div><div class="l">Best week</div></div></div>';
+  svgBars($("weekly-chart"), weeklyCounts(8));
+}
+function renderDifficultyChart(){
+  const el=$("difficulty-chart"); if(!el) return;
+  const pts=state.completed.map(c=>({label:'#'+c.session,y:c.difficulty}));
+  const avg=pts.length?pts.reduce((s,p)=>s+p.y,0)/pts.length:null;
+  svgLine(el, pts, {yMin:1,yMax:10,avg,fmt:v=>Math.round(v*10)/10,empty:"Log a couple more sessions to see your effort trend."});
+}
+function renderStrengthChart(){
+  const ctr=$("strength-controls"); if(!ctr) return;
+  ctr.innerHTML=WEIGHTED_LIFTS.map(n=>'<button data-l="'+n.replace(/"/g,'')+'" class="'+(n===selectedLift?'sel':'')+'">'+shortName(n)+'</button>').join("");
+  ctr.querySelectorAll("button").forEach(b=>{ b.onclick=()=>{ selectedLift=b.getAttribute("data-l"); renderStrengthChart(); }; });
+  const pts=state.completed.filter(c=>c.weights&&c.weights[selectedLift]!=null).map(c=>({label:fmtDate(c.date),y:c.weights[selectedLift]}));
+  svgLine($("strength-chart"), pts, {unit:" lb",fmt:v=>Math.round(v),empty:"No "+shortName(selectedLift)+" logged yet."});
+}
+/* --- Benchmark tests (max reps + mile time vs Murph targets) --- */
+const MURPH_TARGETS={pullups:100,pushups:200,squats:300};
+const BENCH_METRICS=[
+  {id:"pullups",label:"Pull-ups"},
+  {id:"pushups",label:"Push-ups"},
+  {id:"squats",label:"Squats"},
+  {id:"mileSec",label:"1-mile",time:true}
+];
+let benchMetric="pullups";
+function parseMile(s){ const m=String(s).trim().match(/^(\d{1,2}):([0-5]\d)$/); return m?(+m[1])*60+(+m[2]):null; }
+function fmtMile(sec){ if(sec==null) return "—"; const m=Math.floor(sec/60), s=Math.round(sec%60); return m+":"+String(s).padStart(2,"0"); }
+function renderBenchmarks(){
+  const rEl=$("bench-readiness"); if(!rEl) return;
+  const list=(state.benchmarks||[]).slice().sort((a,b)=>a.date<b.date?-1:a.date>b.date?1:0);
+  if(list.length){
+    const latest=list[list.length-1];
+    let html='<div class="bench-latest">Latest test · '+fmtDate(latest.date)+'</div>';
+    [["pullups","Pull-ups"],["pushups","Push-ups"],["squats","Air squats"]].forEach(([k,lbl])=>{
+      if(latest[k]!=null){ const tgt=MURPH_TARGETS[k], pct=Math.min(100,Math.round(latest[k]/tgt*100));
+        html+='<div class="rbar-row"><div class="rbar-top"><span>'+lbl+'</span><span class="rbar-val">'+latest[k]+' / '+tgt+'</span></div><div class="rbar"><i style="width:'+pct+'%"></i></div></div>';
+      }
+    });
+    if(latest.mileSec!=null) html+='<div class="rbar-row"><div class="rbar-top"><span>1-mile run</span><span class="rbar-val">'+fmtMile(latest.mileSec)+'</span></div></div>';
+    rEl.innerHTML=html;
+  } else {
+    rEl.innerHTML='<p class="chart-empty">No tests yet — log your first benchmark to see where you stand vs Murph.</p>';
+  }
+  const ctr=$("bench-controls");
+  ctr.innerHTML=BENCH_METRICS.map(m=>'<button data-m="'+m.id+'" class="'+(m.id===benchMetric?'sel':'')+'">'+m.label+'</button>').join("");
+  ctr.querySelectorAll("button").forEach(b=>{ b.onclick=()=>{ benchMetric=b.getAttribute("data-m"); renderBenchmarks(); }; });
+  const met=BENCH_METRICS.find(m=>m.id===benchMetric);
+  const pts=list.filter(t=>t[benchMetric]!=null).map(t=>({label:fmtDate(t.date),y:t[benchMetric]}));
+  svgLine($("bench-chart"), pts, met.time
+    ? {fmt:fmtMile,empty:"Log a couple of mile times to see your pace trend."}
+    : {fmt:v=>Math.round(v),empty:"Log a couple of tests to see your "+met.label.toLowerCase()+" trend."});
+}
+$("bench-log-btn").onclick=()=>{ const f=$("bench-form"); f.hidden=!f.hidden; if(!f.hidden && !$("bf-date").value) $("bf-date").value=todayKey(); };
+$("bf-cancel").onclick=()=>{ $("bench-form").hidden=true; $("bf-msg").textContent=""; };
+$("bf-save").onclick=async()=>{
+  const date=$("bf-date").value||todayKey();
+  const pull=parseInt($("bf-pull").value,10), push=parseInt($("bf-push").value,10), squat=parseInt($("bf-squat").value,10);
+  const mileRaw=$("bf-mile").value.trim(), mileSec=mileRaw?parseMile(mileRaw):null;
+  if(mileRaw && mileSec==null){ $("bf-msg").textContent="Mile time should look like 8:30."; return; }
+  const entry={date};
+  if(!isNaN(pull)&&pull>=0) entry.pullups=pull;
+  if(!isNaN(push)&&push>=0) entry.pushups=push;
+  if(!isNaN(squat)&&squat>=0) entry.squats=squat;
+  if(mileSec!=null) entry.mileSec=mileSec;
+  if(Object.keys(entry).length<2){ $("bf-msg").textContent="Enter at least one result."; return; }
+  if(!state.benchmarks) state.benchmarks=[];
+  const i=state.benchmarks.findIndex(b=>b.date===date);
+  if(i>=0) state.benchmarks[i]=entry; else state.benchmarks.push(entry);
+  ["bf-pull","bf-push","bf-squat","bf-mile"].forEach(id=>$(id).value="");
+  $("bench-form").hidden=true; $("bf-msg").textContent="";
+  renderBenchmarks(); await save();
+};
+
+function renderProgressDash(){
+  renderCountdownPhase();renderBenchmarks();renderMilestones();renderConsistency();renderDifficultyChart();renderStrengthChart();renderWeightChart();
 }
 
 function cleanupDay(k){const s=state.supps[k];if(s&&!s.creatine&&s.protein==null)delete state.supps[k];}
