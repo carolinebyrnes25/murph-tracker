@@ -1,0 +1,10 @@
+{
+  "name": "murph-reminder-sender",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Sends scheduled workout-reminder push notifications via FCM.",
+  "dependencies": {
+    "firebase-admin": "^12.7.0",
+    "luxon": "^3.5.0"
+  }
+}

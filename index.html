@@ -18,13 +18,76 @@
   body{margin:0;background:var(--paper);color:var(--ink);
     font-family:"Inter",system-ui,-apple-system,sans-serif;font-size:16px;line-height:1.55;
     -webkit-font-smoothing:antialiased;}
-  .wrap{max-width:600px;margin:0 auto;padding:24px 20px 80px;}
+  .wrap{max-width:600px;margin:0 auto;padding:20px 20px 80px;}
   .mono{font-family:"IBM Plex Mono",ui-monospace,monospace;}
 
-  .authbar{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:16px;
-    font-family:"IBM Plex Mono",monospace;font-size:.72rem;color:var(--soft);}
-  .authbar b{color:var(--olive);font-weight:600;}
-  .authbar[hidden]{display:none;}
+  /* top bar + hamburger */
+  .topbar{position:sticky;top:0;z-index:30;display:flex;align-items:center;justify-content:space-between;
+    gap:10px;padding:11px 14px;background:var(--paper);border-bottom:1px solid var(--line);}
+  .menu-btn{width:42px;height:42px;flex:none;border:1px solid var(--line);border-radius:11px;background:var(--card);
+    font-size:1.25rem;line-height:1;cursor:pointer;color:var(--ink);display:flex;align-items:center;justify-content:center;}
+  .menu-btn:hover{background:var(--band);}
+  .topbar-title{font-family:"Barlow Condensed",sans-serif;font-weight:700;text-transform:uppercase;
+    letter-spacing:.06em;font-size:1.25rem;color:var(--olive);}
+  .topbar-spacer{width:42px;flex:none;}
+
+  /* left drawer */
+  .drawer-backdrop{position:fixed;inset:0;background:rgba(27,30,25,.35);z-index:39;opacity:0;
+    pointer-events:none;transition:opacity .25s;}
+  .drawer-backdrop.show{opacity:1;pointer-events:auto;}
+  .drawer{position:fixed;top:0;left:0;bottom:0;width:272px;max-width:82vw;background:var(--card);
+    border-right:1px solid var(--line);box-shadow:var(--shadow);z-index:40;transform:translateX(-102%);
+    transition:transform .25s cubic-bezier(.2,.7,.2,1);display:flex;flex-direction:column;padding:18px 0 14px;}
+  .drawer.open{transform:none;}
+  .drawer-head{padding:6px 22px 14px;border-bottom:1px solid var(--line);margin-bottom:8px;}
+  .nav{list-style:none;margin:0;padding:0;flex:1;}
+  .nav-item{width:100%;text-align:left;background:none;border:none;padding:14px 22px;
+    font-family:"Inter",sans-serif;font-size:1rem;font-weight:600;color:var(--soft);cursor:pointer;
+    border-left:3px solid transparent;}
+  .nav-item:hover{background:var(--band);}
+  .nav-item.active{color:var(--olive);border-left-color:var(--olive);background:var(--band);}
+  .drawer-foot{padding:14px 22px 4px;border-top:1px solid var(--line);display:flex;flex-direction:column;
+    gap:10px;font-family:"IBM Plex Mono",monospace;font-size:.72rem;color:var(--soft);}
+  .drawer-foot b{color:var(--olive);}
+  .drawer-foot .mini{align-self:flex-start;}
+
+  /* views */
+  .view[hidden]{display:none;}
+  .view-title{font-family:"Barlow Condensed",sans-serif;font-weight:700;text-transform:uppercase;
+    font-size:1.6rem;margin:4px 0 4px;letter-spacing:.01em;}
+  .placeholder{background:var(--card);border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);
+    text-align:center;color:var(--soft);padding:28px 24px;margin-top:16px;font-size:.9rem;}
+  .placeholder .big{font-size:2.4rem;margin-bottom:8px;}
+  .placeholder b{color:var(--olive);}
+  /* bodyweight chart */
+  #weight-chart .wchart{width:100%;height:auto;display:block;overflow:visible;}
+  .wchart .wline{fill:none;stroke:var(--olive);stroke-width:2.5;stroke-linejoin:round;stroke-linecap:round;}
+  .wchart .warea{fill:var(--olive-2);opacity:.12;stroke:none;}
+  .wchart .grid{stroke:var(--line);stroke-width:1;}
+  .wchart .ax{font-family:"IBM Plex Mono",monospace;font-size:11px;fill:var(--soft);}
+  .wchart-meta{font-family:"IBM Plex Mono",monospace;font-size:.78rem;color:var(--soft);margin-top:10px;text-align:center;}
+  .wchart-meta b{color:var(--olive);}
+  .chart-empty{color:var(--soft);font-size:.9rem;margin:4px 0;}
+  /* reminders */
+  .rem-lead{font-size:.95rem;color:var(--ink);margin:0 0 16px;}
+  #rem-toggle.on{background:var(--olive-2);}
+  .rem-status{font-family:"IBM Plex Mono",monospace;font-size:.8rem;margin-top:12px;min-height:1em;line-height:1.4;color:var(--soft);}
+  .rem-status.ok{color:var(--olive-2);}
+  .rem-status.err{color:var(--flag);}
+  .rem-note{font-size:.82rem;color:var(--soft);background:var(--band);border-radius:10px;padding:12px 14px;margin-top:16px;line-height:1.45;}
+  .rem-note b{color:var(--olive);}
+  #rem-prefs{margin-top:18px;padding-top:16px;border-top:1px solid var(--line);}
+  .rem-field{margin-bottom:16px;}
+  .rem-label{display:block;font-family:"IBM Plex Mono",monospace;font-size:.68rem;letter-spacing:.1em;
+    text-transform:uppercase;color:var(--soft);margin-bottom:8px;}
+  .rem-days{display:flex;gap:6px;}
+  .rem-day{flex:1;aspect-ratio:1;max-width:46px;border:1px solid var(--line);background:var(--paper);
+    border-radius:9px;font-family:"IBM Plex Mono",monospace;font-size:.85rem;color:var(--soft);cursor:pointer;padding:0;}
+  .rem-day.sel{background:var(--olive);color:#fff;border-color:transparent;font-weight:600;}
+  #rem-time{border:1px solid var(--line);border-radius:10px;background:var(--paper);font-family:"Inter",sans-serif;
+    font-size:1rem;padding:11px 13px;color:var(--ink);}
+  #rem-save{margin-top:4px;}
+  .rem-savemsg{font-family:"IBM Plex Mono",monospace;font-size:.72rem;color:var(--olive-2);margin-left:10px;}
 
   header{margin-bottom:22px;}
   .kicker{font-family:"IBM Plex Mono",monospace;font-size:.68rem;letter-spacing:.2em;
@@ -206,73 +269,133 @@
   </div>
 </div>
 
-<div class="wrap">
-  <div class="authbar" id="authbar" hidden>
-    <span>Signed in as <b id="who"></b></span>
+<div class="topbar" id="topbar">
+  <button class="menu-btn" id="menu-btn" aria-label="Open menu">☰</button>
+  <div class="topbar-title" id="topbar-title">Workout</div>
+  <span class="topbar-spacer"></span>
+</div>
+
+<div class="drawer-backdrop" id="drawer-backdrop"></div>
+<nav class="drawer" id="drawer" aria-label="Sections">
+  <div class="drawer-head"><div class="kicker">Murph · Phase 1</div></div>
+  <ul class="nav">
+    <li><button class="nav-item active" data-view="workout" data-title="Workout">Workout</button></li>
+    <li><button class="nav-item" data-view="supps" data-title="Daily supplements">Daily supplements</button></li>
+    <li><button class="nav-item" data-view="history" data-title="Workout history">Workout history</button></li>
+    <li><button class="nav-item" data-view="progress" data-title="Progress tracker">Progress tracker</button></li>
+    <li><button class="nav-item" data-view="reminders" data-title="Reminders">Reminders</button></li>
+  </ul>
+  <div class="drawer-foot">
+    <div>Signed in as <b id="who"></b></div>
     <button class="mini" id="signout">Sign out</button>
   </div>
+</nav>
 
-  <header>
-    <div class="kicker">Murph · Phase 1 Tracker</div>
-    <h1 id="title">Loading…</h1>
-    <div class="progress-meta"><span id="prog-left">—</span><span id="prog-right"></span></div>
-    <div class="bar"><i id="bar"></i></div>
-  </header>
+<div class="wrap">
+  <!-- HOME: today's workout -->
+  <section class="view" id="view-workout">
+    <header>
+      <div class="kicker">Murph · Phase 1 Tracker</div>
+      <h1 id="title">Loading…</h1>
+      <div class="progress-meta"><span id="prog-left">—</span><span id="prog-right"></span></div>
+      <div class="bar"><i id="bar"></i></div>
+    </header>
 
-  <div id="banner-slot"></div>
+    <div id="banner-slot"></div>
 
-  <div class="next" id="next-card"></div>
+    <div class="next" id="next-card"></div>
 
-  <div class="log-box">
-    <h2>Log this session</h2>
-    <p class="hint">Tap how hard it felt, add a note if anything's worth flagging, then mark it done.</p>
-    <div class="diff-label"><span>Easy</span><span>Difficulty</span><span>Brutal</span></div>
-    <div class="diff" id="diff"></div>
-    <div class="wt-block" id="wt-block"></div>
-    <textarea id="notes" placeholder="Optional — e.g. 'left knee twinged on lunges' or 'runs felt easier'"></textarea>
-    <button class="complete" id="complete" disabled>Mark complete</button>
-    <div class="miss" id="miss"></div>
-  </div>
-
-  <div class="supp-card">
-    <h2>Daily supplements</h2>
-    <p class="today" id="supp-today">Today</p>
-    <div class="supp-row">
-      <span class="lab">Creatine</span>
-      <button class="creatine-toggle" id="creatine-btn">Tap when taken (5g)</button>
+    <div class="log-box">
+      <h2>Log this session</h2>
+      <p class="hint">Tap how hard it felt, add a note if anything's worth flagging, then mark it done.</p>
+      <div class="diff-label"><span>Easy</span><span>Difficulty</span><span>Brutal</span></div>
+      <div class="diff" id="diff"></div>
+      <div class="wt-block" id="wt-block"></div>
+      <textarea id="notes" placeholder="Optional — e.g. 'left knee twinged on lunges' or 'runs felt easier'"></textarea>
+      <button class="complete" id="complete" disabled>Mark complete</button>
+      <div class="miss" id="miss"></div>
     </div>
-    <div class="supp-row">
-      <span class="lab">Protein</span>
-      <div class="protein-input">
-        <input type="number" id="protein-in" inputmode="numeric" placeholder="grams today" min="0" max="400">
-        <button id="protein-save">Save</button>
+  </section>
+
+  <!-- DAILY SUPPLEMENTS -->
+  <section class="view" id="view-supps" hidden>
+    <div class="supp-card">
+      <h2>Daily supplements</h2>
+      <p class="today" id="supp-today">Today</p>
+      <div class="supp-row">
+        <span class="lab">Bodyweight</span>
+        <div class="protein-input">
+          <input type="number" id="bw-in" inputmode="numeric" placeholder="lb" min="50" max="600">
+          <button id="bw-save">Save</button>
+        </div>
+      </div>
+      <div class="supp-row">
+        <span class="lab">Protein</span>
+        <div class="protein-input">
+          <input type="number" id="protein-in" inputmode="numeric" placeholder="grams today" min="0" max="400">
+          <button id="protein-save">Save</button>
+        </div>
+      </div>
+      <div class="supp-caption" id="protein-caption"></div>
+      <div class="supp-row">
+        <span class="lab">Creatine</span>
+        <button class="creatine-toggle" id="creatine-btn">Tap when taken (5g)</button>
+      </div>
+      <div class="supp-strip" id="supp-strip"></div>
+    </div>
+  </section>
+
+  <!-- WORKOUT HISTORY -->
+  <section class="view" id="view-history" hidden>
+    <div class="hist-head">
+      <h2>Workout history</h2>
+      <div class="actions">
+        <button class="mini" id="copy">Copy log</button>
+        <button class="mini" id="undo">Undo last</button>
+        <button class="mini danger" id="reset">Reset</button>
       </div>
     </div>
-    <div class="supp-caption" id="protein-caption"></div>
-    <div class="supp-row">
-      <span class="lab">Bodyweight</span>
-      <div class="protein-input">
-        <input type="number" id="bw-in" inputmode="numeric" placeholder="lb" min="50" max="600">
-        <button id="bw-save">Save</button>
+    <div class="hist" id="hist"></div>
+    <div class="copy-panel" id="copy-panel">
+      <div class="cmsg" id="cmsg"></div>
+      <textarea id="copy-text" readonly></textarea>
+    </div>
+  </section>
+
+  <!-- REMINDERS (push notifications) -->
+  <section class="view" id="view-reminders" hidden>
+    <h2 class="view-title">Reminders</h2>
+    <div class="supp-card">
+      <p class="rem-lead">Get a push nudge to train — on the days and time <em>you</em> choose.</p>
+      <button class="complete" id="rem-toggle">Turn on reminders</button>
+      <div class="rem-status" id="rem-status"></div>
+      <div id="rem-prefs" hidden>
+        <div class="rem-field">
+          <label class="rem-label">Remind me on</label>
+          <div class="rem-days" id="rem-days"></div>
+        </div>
+        <div class="rem-field">
+          <label class="rem-label">At</label>
+          <input type="time" id="rem-time" step="1800" value="07:00">
+        </div>
+        <button class="mini" id="rem-save">Save schedule</button>
+        <span class="rem-savemsg" id="rem-savemsg"></span>
       </div>
+      <p class="rem-note">📱 <b>On iPhone:</b> first add this app to your Home Screen (Share → Add to Home Screen) and open it from that icon — Apple only allows notifications for installed web apps.</p>
     </div>
-    <div class="supp-strip" id="supp-strip"></div>
-  </div>
+  </section>
 
-  <div class="hist-head">
-    <h2>Workout history</h2>
-    <div class="actions">
-      <button class="mini" id="copy">Copy log</button>
-      <button class="mini" id="undo">Undo last</button>
-      <button class="mini danger" id="reset">Reset</button>
+  <!-- PROGRESS TRACKER (placeholder — real feature later) -->
+  <section class="view" id="view-progress" hidden>
+    <h2 class="view-title">Progress tracker</h2>
+    <div class="supp-card">
+      <h2>Bodyweight</h2>
+      <div id="weight-chart"></div>
     </div>
-  </div>
-  <div class="hist" id="hist"></div>
-
-  <div class="copy-panel" id="copy-panel">
-    <div class="cmsg" id="cmsg"></div>
-    <textarea id="copy-text" readonly></textarea>
-  </div>
+    <div class="card placeholder">
+      <p>More charts — difficulty, training volume, and weights lifted over time — coming soon.</p>
+    </div>
+  </section>
 
   <footer>Your progress syncs to your account.</footer>
 </div>
@@ -283,6 +406,8 @@ import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRe
          onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import { initializeFirestore, getFirestore, persistentLocalCache, doc, getDoc, setDoc
        } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { getMessaging, getToken, isSupported as messagingSupported
+       } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-messaging.js";
 
 // ---- Firebase config (public identifiers, safe to ship) ----
 const firebaseConfig = {
@@ -337,6 +462,17 @@ const PHASE1_SESSIONS=16;
 const CREATINE_G=5;
 const CACHE_KEY="murph:cache";      // local mirror, keyed per-uid below
 const LEGACY_KEY="murph:state";     // pre-cloud single-user data to migrate
+// DEV/test mode: ANY host that isn't the real production URL runs offline of Firebase —
+// no sign-in, isolated local storage, never writes to Firestore. Covers localhost, file://,
+// and every preview host. ?prod=1 forces the real login (to test it); ?dev=1 forces test mode.
+const PROD_HOST="carolinebyrnes25.github.io";
+const _q=new URLSearchParams(location.search);
+const DEV = _q.get("prod")==="1" ? false
+          : _q.get("dev")==="1" ? true
+          : location.hostname!==PROD_HOST;
+const DEV_KEY="murph:dev";
+// FCM Web Push public (VAPID) key — safe to ship. Used to register a device for reminders.
+const VAPID_KEY="BOYYZpjg9iA3zHQ08dAXpV1wzz9aGH_ytLLcSYr0mX3v_UrXmdyR21WKk9EFwo_msCKtJjVPM4H-mMoTVkGrpVY";
 
 let state={completed:[],supps:{}};
 let picked=null;
@@ -367,6 +503,14 @@ function proteinRange(){ return state.bodyweight>0 ? [Math.round(state.bodyweigh
 // Recommended working weight per exercise: the user's saved value, else the plan default.
 function exWeight(e){ return (state.weights && state.weights[e.name]!=null) ? state.weights[e.name] : e.w.def; }
 function weightedForDay(day){ return PHASE1[day].ex.filter(e=>e.w); }
+function normalizeState(){
+  if(!state.weights) state.weights={};
+  if(!state.weightLog) state.weightLog=[];
+  if(!state.fcmTokens) state.fcmTokens=[];
+  if(!state.reminderPrefs) state.reminderPrefs={enabled:false,days:[0,1,2,3,4,5,6],time:"07:00",tz:(Intl.DateTimeFormat().resolvedOptions().timeZone||"America/New_York")};
+  // migrate a pre-existing single bodyweight into the dated weight log
+  if(state.bodyweight>0 && !state.weightLog.length) state.weightLog=[{date:todayKey(),lb:state.bodyweight}];
+}
 
 // Session #1 (Jul 13, 2026), logged in chat before the tracker existed — his baseline.
 function seedState(){
@@ -382,10 +526,10 @@ function seedState(){
 /* ---------------- Auth ---------------- */
 const overlay=$("auth-overlay");
 function showOverlay(msg,isErr){
-  overlay.hidden=false; $("authbar").hidden=true;
+  overlay.hidden=false; $("topbar").style.visibility="hidden";
   if(msg){ $("auth-note").textContent=msg; $("auth-note").className="auth-note "+(isErr?"err":"ok"); }
 }
-function hideOverlay(){ overlay.hidden=true; }
+function hideOverlay(){ overlay.hidden=true; $("topbar").style.visibility="visible"; }
 
 const provider=new GoogleAuthProvider();
 provider.setCustomParameters({ prompt:"select_account" });
@@ -417,7 +561,8 @@ async function handleRedirectResult(){
   catch(e){ if(e && e.code) showOverlay("Sign-in failed: "+e.code, true); }
 }
 
-onAuthStateChanged(auth, async (u)=>{
+function initAuth(){
+ onAuthStateChanged(auth, async (u)=>{
   if(u){
     const email=(u.email||"").toLowerCase();
     if(!ALLOWLIST.includes(email)){
@@ -426,13 +571,26 @@ onAuthStateChanged(auth, async (u)=>{
       return;
     }
     user=u; hideOverlay();
-    $("authbar").hidden=false; $("who").textContent=nameFor(email);
+    $("who").textContent=nameFor(email);
     await initUserData(email);
   } else {
     user=null; userRef=null;
     showOverlay();
   }
-});
+ });
+}
+
+// Local test mode: no sign-in, no cloud. State persists to a separate localStorage key only.
+function devInit(){
+  user={email:"dev@local",uid:"dev"}; userRef=null;   // userRef null => save() never hits Firestore
+  let saved=null;
+  try{ const raw=localStorage.getItem(DEV_KEY); if(raw) saved=JSON.parse(raw); }catch(e){}
+  state = saved || {completed:[],supps:{},plan:"murph-phase1",bodyweight:null,weights:{},weightLog:[]};
+  normalizeState();
+  hideOverlay();
+  $("who").textContent="🔧 Local test (no cloud)";
+  ready=true; render();
+}
 
 async function initUserData(email){
   userRef=doc(db,"users",user.uid);
@@ -440,7 +598,7 @@ async function initUserData(email){
   try{ snap=await getDoc(userRef); }catch(e){}
   if(snap && snap.exists() && Array.isArray(snap.data().completed)){
     const d=snap.data();
-    state={completed:d.completed||[], supps:d.supps||{}, plan:d.plan||"murph-phase1", bodyweight:d.bodyweight||null, weights:d.weights||{}};
+    state={completed:d.completed||[], supps:d.supps||{}, plan:d.plan||"murph-phase1", bodyweight:d.bodyweight||null, weights:d.weights||{}, weightLog:d.weightLog||[], fcmTokens:d.fcmTokens||[], reminderPrefs:d.reminderPrefs||null};
   }else{
     // New profile. Only the husband inherits the pre-cloud Session #1 backfill /
     // any log already stored on his device; everyone else starts clean.
@@ -455,19 +613,21 @@ async function initUserData(email){
     }
     await save();
   }
-  if(!state.weights) state.weights={};
+  normalizeState();
   ready=true;
   render();
 }
 
 /* ---------------- Persistence ---------------- */
 async function save(){
-  try{ localStorage.setItem(CACHE_KEY+":"+(user?user.uid:"anon"), JSON.stringify(state)); }catch(e){}
-  if(userRef && user){
+  const key = DEV ? DEV_KEY : CACHE_KEY+":"+(user?user.uid:"anon");
+  try{ localStorage.setItem(key, JSON.stringify(state)); }catch(e){}
+  if(!DEV && userRef && user){
     try{
       await setDoc(userRef, {
         email:user.email, name:nameFor((user.email||"").toLowerCase()),
         plan:state.plan||"murph-phase1", bodyweight:state.bodyweight||null, weights:state.weights||{},
+        weightLog:state.weightLog||[], fcmTokens:state.fcmTokens||[], reminderPrefs:state.reminderPrefs||null,
         completed:state.completed, supps:state.supps, updatedAt:Date.now()
       }, {merge:true});
     }catch(e){ console.warn("cloud save failed (will retry when online):", e); }
@@ -592,7 +752,41 @@ function renderSupps(){
 
 function render(){
   if(!ready) return;
-  renderProgress();renderNext();renderWeights();renderHist();renderSupps();renderBanner();
+  renderProgress();renderNext();renderWeights();renderHist();renderSupps();renderBanner();renderWeightChart();renderReminders();
+}
+
+// Bodyweight-over-time line chart for the Progress tracker view.
+function renderWeightChart(){
+  const el=$("weight-chart"); if(!el) return;
+  const log=(state.weightLog||[]).slice().sort((a,b)=> a.date<b.date?-1: a.date>b.date?1:0);
+  const md=k=>{const p=k.split("-");return parseInt(p[1])+"/"+parseInt(p[2]);};
+  if(log.length<2){
+    const cur=log.length?log[log.length-1].lb:(state.bodyweight||null);
+    el.innerHTML='<p class="chart-empty">'+(cur?"Current: <b>"+cur+" lb</b>. ":"")+
+      "Log your bodyweight on a few different days (under Daily supplements) to see your trend here.</p>";
+    return;
+  }
+  const W=520,H=210,L=40,R=14,T=16,B=30;
+  const ys=log.map(d=>d.lb); let lo=Math.min(...ys), hi=Math.max(...ys);
+  if(lo===hi){ lo-=2; hi+=2; } else { const p=(hi-lo)*0.15; lo-=p; hi+=p; }
+  const x=i=> L+(W-L-R)*(i/(log.length-1));
+  const y=v=> T+(H-T-B)*(1-(v-lo)/(hi-lo));
+  const line="M"+log.map((d,i)=>x(i).toFixed(1)+","+y(d.lb).toFixed(1)).join(" L");
+  const area="M"+x(0).toFixed(1)+","+(H-B)+" L"+log.map((d,i)=>x(i).toFixed(1)+","+y(d.lb).toFixed(1)).join(" L")+" L"+x(log.length-1).toFixed(1)+","+(H-B)+" Z";
+  const dots=log.map((d,i)=>'<circle cx="'+x(i).toFixed(1)+'" cy="'+y(d.lb).toFixed(1)+'" r="3.2" fill="var(--olive)"/>').join("");
+  const cur=log[log.length-1].lb, first=log[0].lb, delta=cur-first;
+  const deltaStr=(delta>0?"+":"")+(Math.abs(delta)%1?delta.toFixed(1):delta.toFixed(0))+" lb since "+md(log[0].date);
+  el.innerHTML=
+    '<svg viewBox="0 0 '+W+' '+H+'" class="wchart" role="img" aria-label="Bodyweight over time">'+
+      '<line x1="'+L+'" y1="'+(H-B)+'" x2="'+(W-R)+'" y2="'+(H-B)+'" class="grid"/>'+
+      '<path d="'+area+'" class="warea"/>'+
+      '<path d="'+line+'" class="wline"/>'+dots+
+      '<text x="'+(L-6)+'" y="'+(T+4)+'" text-anchor="end" class="ax">'+Math.round(hi)+'</text>'+
+      '<text x="'+(L-6)+'" y="'+(H-B)+'" text-anchor="end" class="ax">'+Math.round(lo)+'</text>'+
+      '<text x="'+x(0)+'" y="'+(H-9)+'" text-anchor="start" class="ax">'+md(log[0].date)+'</text>'+
+      '<text x="'+x(log.length-1)+'" y="'+(H-9)+'" text-anchor="end" class="ax">'+md(log[log.length-1].date)+'</text>'+
+    '</svg>'+
+    '<div class="wchart-meta"><b>'+cur+' lb</b> now · '+deltaStr+'</div>';
 }
 
 function cleanupDay(k){const s=state.supps[k];if(s&&!s.creatine&&s.protein==null)delete state.supps[k];}
@@ -640,14 +834,22 @@ $("protein-save").onclick=async()=>{
 };
 $("bw-save").onclick=async()=>{
   const v=parseInt($("bw-in").value,10);
-  state.bodyweight=(!isNaN(v)&&v>0)?v:null;
-  renderSupps(); await save();
+  if(!isNaN(v)&&v>0){
+    state.bodyweight=v;
+    if(!state.weightLog) state.weightLog=[];
+    const tk=todayKey();
+    const e=state.weightLog.find(x=>x.date===tk);
+    if(e) e.lb=v; else state.weightLog.push({date:tk,lb:v});   // one entry per day
+  }else{
+    state.bodyweight=null;
+  }
+  renderSupps(); renderWeightChart(); await save();
   $("bw-in").blur();
 };
 $("undo").onclick=async()=>{if(!state.completed.length)return;state.completed.pop();render();await save();};
 $("reset").onclick=async()=>{
   if(!confirm("Clear your entire log (workouts + supplements)? This can't be undone."))return;
-  state={completed:[],supps:{},plan:"murph-phase1",bodyweight:state.bodyweight||null,weights:state.weights||{}};resetInputs();render();$("copy-panel").classList.remove("show");await save();
+  state={completed:[],supps:{},plan:"murph-phase1",bodyweight:state.bodyweight||null,weights:state.weights||{},weightLog:state.weightLog||[]};resetInputs();render();$("copy-panel").classList.remove("show");await save();
 };
 $("copy").onclick=async()=>{
   let txt="Murph Phase 1 — "+nameFor((user&&user.email||"").toLowerCase())+"'s session log:\n";
@@ -674,11 +876,98 @@ $("copy").onclick=async()=>{
   catch(e){$("cmsg").textContent="Select the text below and copy it.";$("copy-text").focus();$("copy-text").select();}
 };
 
+/* ---------------- Navigation (hamburger drawer + views) ---------------- */
+const VIEWS=["workout","supps","history","progress","reminders"];
+function openDrawer(){ $("drawer").classList.add("open"); $("drawer-backdrop").classList.add("show"); }
+function closeDrawer(){ $("drawer").classList.remove("open"); $("drawer-backdrop").classList.remove("show"); }
+function showView(v){
+  VIEWS.forEach(x=>{ const el=$("view-"+x); if(el) el.hidden=(x!==v); });
+  document.querySelectorAll(".nav-item").forEach(b=>{
+    const on=b.dataset.view===v; b.classList.toggle("active", on);
+    if(on) $("topbar-title").textContent=b.dataset.title;
+  });
+  closeDrawer();
+  window.scrollTo(0,0);
+}
+$("menu-btn").onclick=openDrawer;
+$("drawer-backdrop").onclick=closeDrawer;
+document.querySelectorAll(".nav-item").forEach(b=>{ b.onclick=()=>showView(b.dataset.view); });
+
+/* ---------------- Reminders (push notifications) ---------------- */
+const DAY_LABELS=["S","M","T","W","T","F","S"];
+function setRemStatus(msg,type){ const el=$("rem-status"); if(!el)return; el.textContent=msg||""; el.className="rem-status"+(type?" "+type:""); }
+function renderReminders(){
+  const btn=$("rem-toggle"); if(!btn) return;
+  const p=state.reminderPrefs||{}; const on=!!p.enabled;
+  btn.textContent = on ? "Reminders are on ✓" : "Turn on reminders";
+  btn.classList.toggle("on", on);
+  $("rem-prefs").hidden = !on;
+  if(on){
+    const days=p.days||[];
+    $("rem-days").innerHTML=DAY_LABELS.map((d,i)=>'<button type="button" class="rem-day'+(days.includes(i)?" sel":"")+'" data-d="'+i+'">'+d+'</button>').join("");
+    $("rem-days").querySelectorAll(".rem-day").forEach(b=>{ b.onclick=()=>b.classList.toggle("sel"); });
+    $("rem-time").value=p.time||"07:00";
+  }
+  if(DEV && !$("rem-status").textContent){
+    setRemStatus("Preview mode: you can set the schedule here, but reminders only actually send from the live app.","");
+  }
+}
+async function enableReminders(){
+  const p=state.reminderPrefs;
+  if(DEV){ p.enabled=true; await save(); renderReminders(); setRemStatus("Preview: turned on locally — set your days/time below. Real delivery only happens on the live app.","ok"); return; }
+  const btn=$("rem-toggle"); btn.disabled=true; btn.textContent="Setting up…"; setRemStatus("");
+  try{
+    if(!(await messagingSupported())){
+      setRemStatus("This browser can't receive push notifications yet. On iPhone: add the app to your Home Screen (Share → Add to Home Screen), open it from that icon, then try again.","err"); return;
+    }
+    const perm=await Notification.requestPermission();
+    if(perm!=="granted"){ setRemStatus("Notifications are turned off for this app. Allow them in settings, then try again.","err"); return; }
+    const fcmReg=await navigator.serviceWorker.register("./firebase-messaging-sw.js",{scope:"./push/"});
+    const token=await getToken(getMessaging(fbApp),{vapidKey:VAPID_KEY,serviceWorkerRegistration:fcmReg});
+    if(!token){ setRemStatus("Couldn't finish setting up — please try again.","err"); return; }
+    if(!state.fcmTokens) state.fcmTokens=[];
+    if(!state.fcmTokens.includes(token)) state.fcmTokens.push(token);
+    p.enabled=true; p.tz=Intl.DateTimeFormat().resolvedOptions().timeZone||p.tz||"America/New_York";
+    await save();
+    renderReminders(); setRemStatus("Reminders are on ✓ Pick your days and time below.","ok");
+  }catch(e){ setRemStatus("Something went wrong: "+(e.code||e.message||e),"err"); }
+  finally{ btn.disabled=false; renderReminders(); }
+}
+$("rem-toggle").onclick=async()=>{
+  const p=state.reminderPrefs;
+  if(p.enabled){ p.enabled=false; await save(); renderReminders(); setRemStatus("Reminders are off.",""); return; }
+  enableReminders();
+};
+$("rem-save").onclick=async()=>{
+  const p=state.reminderPrefs;
+  p.days=[...$("rem-days").querySelectorAll(".rem-day.sel")].map(b=>+b.dataset.d);
+  p.time=$("rem-time").value||"07:00";
+  p.tz=Intl.DateTimeFormat().resolvedOptions().timeZone||p.tz||"America/New_York";
+  await save();
+  const m=$("rem-savemsg"); m.textContent="Saved ✓"; setTimeout(()=>{m.textContent="";},2000);
+};
+
 /* ---------------- Boot ---------------- */
 buildDiff();
-await handleRedirectResult();
-// onAuthStateChanged drives the rest; show overlay immediately if clearly signed out
-if(!auth.currentUser) showOverlay();
+if(DEV){
+  // localhost: skip auth entirely, load the local test profile.
+  devInit();
+}else{
+  initAuth();
+  await handleRedirectResult();
+  // onAuthStateChanged drives the rest; show overlay immediately if clearly signed out
+  if(!auth.currentUser) showOverlay();
+}
+
+// Service worker ONLY in production (always-latest + offline). In preview/dev we skip it and
+// actively clear any leftover SW/caches, so the preview always renders the newest file.
+if(DEV){
+  if("serviceWorker" in navigator){ navigator.serviceWorker.getRegistrations().then(rs=>rs.forEach(r=>r.unregister())).catch(()=>{}); }
+  if(self.caches){ caches.keys().then(ks=>ks.forEach(k=>caches.delete(k))).catch(()=>{}); }
+}else if("serviceWorker" in navigator){
+  navigator.serviceWorker.register("./sw.js", {updateViaCache:"none"})
+    .then(reg=>reg.update()).catch(()=>{});
+}
 </script>
 </body>
 </html>
