@@ -94,6 +94,7 @@
     <div class="supp-card">
       <h2>Daily supplements</h2>
       <p class="today" id="supp-today">Today</p>
+      <p class="ms-sub" id="supp-hint">Forgot to log one? Tap any day in the strip below to fill it in.</p>
       <div class="supp-row">
         <span class="lab">Protein</span>
         <button class="protein-toggle" id="protein-btn">Tap when you've had a shake (48g)</button>
@@ -148,15 +149,16 @@
       <div class="rem-field">
         <label class="rem-label">Days per week you'll train</label>
         <div class="rem-days" id="dpw-pills"></div>
+        <div class="supp-caption" id="pace-readout"></div>
       </div>
       <div class="rem-field">
-        <label class="rem-label" for="weight-in">Your weight</label>
+        <label class="rem-label" for="weight-in">Your weight <span class="rem-hint">(sets your daily protein target)</span></label>
         <div class="protein-input">
           <input type="number" id="weight-in" inputmode="numeric" placeholder="lb" min="50" max="600">
           <button id="goal-save">Save</button>
         </div>
+        <div class="rem-days-summary" id="protein-hint"></div>
       </div>
-      <div class="supp-caption" id="pace-readout"></div>
     </div>
     <div class="supp-card">
       <h2>Notifications</h2>
@@ -220,12 +222,14 @@
 
     <div class="supp-card">
       <h2>Consistency</h2>
+      <p class="ms-sub">One bar per week — how many sessions you logged. Each label is the <b>Sunday that week began</b> (so “7/12” = the week of Sun Jul 12). Showing the last 8 weeks; consistency beats intensity, so the aim is a steady row, not one tall bar.</p>
       <div id="consistency-stats"></div>
       <div id="weekly-chart"></div>
     </div>
 
     <div class="supp-card">
       <h2>Effort trend</h2>
+      <p class="ms-sub">The <b>difficulty you rated each session</b> (1–10) when you logged it, in order — nothing is calculated or inferred. The dashed line is your average across every session. Drifting <b>down</b> over time at the same workload means it's getting easier: that's fitness.</p>
       <div id="difficulty-chart"></div>
     </div>
 
