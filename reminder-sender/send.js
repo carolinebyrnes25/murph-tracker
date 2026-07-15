@@ -14,10 +14,13 @@ const messaging = admin.messaging();
 const SITE = 'https://carolinebyrnes25.github.io/murph-tracker/';
 const WINDOW = 30; // minutes; must match the cron cadence
 
+const DRY = process.env.DRY_RUN === '1';
+
 (async () => {
-  console.log('Run at ' + DateTime.now().setZone('America/New_York').toFormat("ccc yyyy-LL-dd HH:mm") + ' ET');
+  console.log((DRY ? '[DRY RUN] ' : '') + 'Run at ' + DateTime.now().setZone('America/New_York').toFormat("ccc yyyy-LL-dd HH:mm") + ' ET');
   const snap = await db.collection('users').get();
   const targets = []; // { uid, token }
+  const toMark = [];  // users to stamp lastReminderSent after sending
   console.log(`Scanning ${snap.size} user profile(s).`);
 
   for (const docSnap of snap.docs) {
@@ -39,14 +42,19 @@ const WINDOW = 30; // minutes; must match the cron cadence
     const [ph, pm] = String(p.time || '07:00').split(':').map(Number);
     const userMin = ph * 60 + pm;
     const nowMin = now.hour * 60 + now.minute;
-    const slot = Math.floor(nowMin / WINDOW) * WINDOW; // floor to the cron window
-    if (userMin < slot || userMin >= slot + WINDOW) continue;
+    const todayStr = now.toFormat('yyyy-LL-dd');
+    // Robust to GitHub's unreliable cron: send once, on the FIRST run at/after the
+    // user's time on a chosen day — not only inside a narrow window.
+    if (nowMin < userMin) continue;                 // their time hasn't arrived yet today
+    if (u.lastReminderSent === todayStr) continue;  // already reminded today
 
     for (const t of tokens) targets.push({ uid: docSnap.id, token: t });
+    toMark.push({ uid: docSnap.id, day: todayStr });
   }
 
   if (targets.length === 0) { console.log('No reminders due this run.'); return; }
-  console.log(`Reminders due: ${targets.length} token(s).`);
+  console.log(`Reminders due: ${targets.length} token(s) across ${toMark.length} user(s).`);
+  if (DRY) { console.log('[DRY RUN] Not sending or marking — would notify the user(s) above.'); return; }
 
   const deadByUid = {};
   for (const { uid, token } of targets) {
@@ -71,6 +79,11 @@ const WINDOW = 30; // minutes; must match the cron cadence
       fcmTokens: admin.firestore.FieldValue.arrayRemove(...deadByUid[uid])
     });
     console.log(`Pruned ${deadByUid[uid].length} dead token(s) for ${uid}.`);
+  }
+  // Stamp who got reminded today so we don't double-send on later runs.
+  for (const m of toMark) {
+    try { await db.collection('users').doc(m.uid).update({ lastReminderSent: m.day }); }
+    catch (e) { console.log('mark failed for ' + m.uid.slice(0, 6)); }
   }
   console.log('Done.');
 })().catch((e) => { console.error(e); process.exit(1); });

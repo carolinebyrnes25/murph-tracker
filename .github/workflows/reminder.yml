@@ -2,8 +2,13 @@ name: Workout reminders
 
 on:
   schedule:
-    - cron: '*/30 * * * *'   # every 30 minutes; sender matches each user's chosen time within the window
-  workflow_dispatch: {}       # allows a manual "Run workflow" for testing
+    - cron: '*/30 * * * *'   # every 30 min (GitHub cron is best-effort; sender is catch-up based so late runs still deliver)
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Dry run: log who would be notified without sending'
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -24,3 +29,4 @@ jobs:
         run: node send.js
         env:
           FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          DRY_RUN: ${{ inputs.dry_run && '1' || '0' }}
