@@ -18,22 +18,22 @@ export const PHASE1 = {
   A:{nm:"Pull + Run base",tag:"Pulling pattern · easy running",totals:{pullups:0,pushups:0,squats:0,mile:0},ex:[
     {name:"Dead hang",dose:"3 × 15–20s",what:"Hang from a pull-up bar, arms straight, feet off the floor."},
     {name:"Inverted row (barbell/TRX)",dose:"3 × 8–10",what:"Lie under a bar and pull your chest up to it, body straight.",note:"More upright = easier · more horizontal = harder"},
-    {name:"Lat pulldown or assisted pull-up",dose:"3 × 8–10",what:"Machine version of a pull-up — same muscles, at a weight you pick.",w:{def:100,step:10}},
+    {name:"Lat pulldown or assisted pull-up",dose:"3 × 8–10",what:"Machine version of a pull-up — same muscles, at a weight you pick.",w:{def:100,step:10,per:"total"}},
     {name:"Incline push-ups",dose:"3 × 8–12",what:"Push-ups with your hands up on a bench or bar — easier than the floor."},
     {name:"Run / walk",dose:"15 min",what:"Easy jogging broken up with walking to build your running base.",note:"Jog 1 min / walk 2 min"}]},
   B:{nm:"Squat + Intervals",tag:"Legs · interval running",totals:{pullups:0,pushups:0,squats:45,mile:0},ex:[
-    {name:"Goblet squat",dose:"3 × 10",what:"Squat while holding one dumbbell against your chest.",w:{def:25,step:5}},
+    {name:"Goblet squat",dose:"3 × 10",what:"Squat while holding one dumbbell against your chest.",w:{def:25,step:5,per:"total"}},
     {name:"Bodyweight squats",dose:"3 × 15",what:"Plain air squats, no weight — the exact squat Murph asks for.",note:"Hip crease below the knee"},
     {name:"Walking lunges",dose:"2 × 10 / leg",what:"Step forward into a lunge, alternating legs as you walk."},
-    {name:"DB Romanian deadlift",dose:"2 × 10",what:"Hinge at the hips, sliding dumbbells down your legs — hamstrings and back.",w:{def:30,step:5}},
+    {name:"DB Romanian deadlift",dose:"2 × 10",what:"Hinge at the hips, sliding dumbbells down your legs — hamstrings and back.",w:{def:30,step:5,per:"each"}},
     {name:"Run / walk intervals",dose:"12–15 min",what:"Short jog/walk repeats to build running fitness.",note:"Jog 1 min / walk 1–2 min"},
     {name:"Plank",dose:"3 × 20–30s",what:"Hold a straight body on forearms and toes — core work."}]},
   C:{nm:"Push + Pull",tag:"Pressing · more pulling volume",totals:{pullups:0,pushups:0,squats:0,mile:0},ex:[
-    {name:"DB bench press (or incline push-ups)",dose:"3 × 8–10",what:"Lying on a bench, press dumbbells up off your chest.",w:{def:30,step:5}},
+    {name:"DB bench press (or incline push-ups)",dose:"3 × 8–10",what:"Lying on a bench, press dumbbells up off your chest.",w:{def:30,step:5,per:"each"}},
     {name:"Band-assisted pull-ups",dose:"3 × 5–8",what:"Pull-ups with a band under your feet carrying some of your weight.",note:"A band that lets you do clean reps"},
     {name:"Inverted row (barbell/TRX)",dose:"3 × 10",what:"Lie under a bar and pull your chest up to it, body straight."},
     {name:"Incline / knee push-ups",dose:"3 × clean",what:"Push-ups made easier — hands raised, or knees on the floor.",note:"Leave 2 in the tank"},
-    {name:"Overhead DB press",dose:"2 × 10",what:"Press dumbbells from your shoulders straight overhead.",w:{def:20,step:5}}]},
+    {name:"Overhead DB press",dose:"2 × 10",what:"Press dumbbells from your shoulders straight overhead.",w:{def:20,step:5,per:"each"}}]},
   D:{nm:"Mixed conditioning",tag:"A first taste of Murph",totals:{pullups:0,pushups:0,squats:50,mile:0},ex:[
     {name:"Easy jog",dose:"5 min",what:"Gentle warm-up jog to loosen up."},
     {name:"Circuit — unhurried",dose:"5 rounds",what:"Murph's three moves in miniature — repeat the round, no rush.",note:"2 assisted pull-ups · 5 incline push-ups · 10 squats"},
@@ -123,8 +123,8 @@ function phase2(c){
     C:{nm:"Push volume + pull",tag:"Pressing · more pulling",ex:[
         {name:"Push-ups",dose:"6 × "+pp,what:"On the floor. Stop each set 1-2 reps short of failure."},
         {name:"Pull-ups",dose:"4 × "+pu,what:"Unassisted. Quality over speed."},
-        {name:"DB bench press",dose:"3 × 8–10",what:"Lying on a bench, press dumbbells up off your chest.",w:{def:30,step:5}},
-        {name:"Overhead DB press",dose:"2 × 10",what:"Press dumbbells from your shoulders straight overhead.",w:{def:20,step:5}}],
+        {name:"DB bench press",dose:"3 × 8–10",what:"Lying on a bench, press dumbbells up off your chest.",w:{def:30,step:5,per:"each"}},
+        {name:"Overhead DB press",dose:"2 × 10",what:"Press dumbbells from your shoulders straight overhead.",w:{def:20,step:5,per:"each"}}],
        totals:{pullups:4*pu, pushups:6*pp, squats:0, mile:0}},
     D:{nm:"Murph rounds · quarter",tag:"The real thing, scaled",ex:[
         runLine(),
@@ -197,5 +197,8 @@ export function workoutFor(pos, benchmarks, vest){
 export function weightedForDay(day, benchmarks, vest){
   return (workoutFor(ORDER.indexOf(day), benchmarks, vest).ex||[]).filter(e=>e.w);
 }
+// How to read a weighted lift's number: "each hand" for two-dumbbell lifts, "total" for a
+// single implement (goblet squat) or a machine stack (lat pulldown). Shown next to the weight.
+export function loadBasis(e){ return (e.w && e.w.per==="each") ? "each hand" : "total"; }
 /* ===================== Progress dashboard ===================== */
 export const WEIGHTED_LIFTS=["Lat pulldown or assisted pull-up","Goblet squat","DB Romanian deadlift","DB bench press (or incline push-ups)","Overhead DB press"];
