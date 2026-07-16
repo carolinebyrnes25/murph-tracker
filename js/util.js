@@ -2,7 +2,7 @@ import { NAMES } from "./config.js";
 
 export const $=id=>document.getElementById(id);
 export function diffColor(n){
-  if(n<=3)return"#6E8B3E"; if(n<=5)return"#8a9a3a";
+  if(n<=3)return"#3A66A5"; if(n<=5)return"#6C93C4";
   if(n<=7)return"#C97A2C"; return"#BF4A2B";
 }
 export function iso(d){return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");}

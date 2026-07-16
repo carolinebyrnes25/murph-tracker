@@ -1,6 +1,6 @@
   :root{
     --paper:#F3F4EF; --card:#FCFCFA; --ink:#1B1E19; --soft:#565B4F;
-    --line:#DDDED5; --olive:#3E4E2A; --olive-2:#6E8B3E; --band:#E7E8DF;
+    --line:#DDDED5; --olive:#2B4B7F; --olive-2:#3A66A5; --band:#E7E8DF;   /* accent: blue (--olive* names kept) */
     --flag:#BF4A2B; --shadow:0 1px 2px rgba(27,30,25,.04),0 8px 24px rgba(27,30,25,.05);
   }
   *{box-sizing:border-box;}
@@ -171,7 +171,7 @@
   .coach-rec b{color:var(--olive);}
   .coach-flag{background:#F3E4DD;color:#7a3520;border-radius:10px;padding:12px 14px;font-size:.88rem;line-height:1.45;margin:12px 0 2px;}
   /* earned a jump forward for a run of easy sessions */
-  .coach-jump{background:#E4EDD4;color:#33421F;border-radius:10px;padding:12px 14px;font-size:.88rem;line-height:1.45;margin:12px 0 2px;}
+  .coach-jump{background:#DEE8F5;color:#1F3A63;border-radius:10px;padding:12px 14px;font-size:.88rem;line-height:1.45;margin:12px 0 2px;}
   .coach-jump b{color:var(--olive);}
   .coach-x{position:absolute;top:10px;right:12px;background:none;border:none;font-size:1.5rem;line-height:1;color:var(--soft);cursor:pointer;padding:2px 6px;}
   .coach-x:hover{color:var(--ink);}
@@ -204,7 +204,7 @@
   .pace-line{margin-top:9px;padding:9px 11px;border-radius:10px;background:var(--card);
     border:1px solid var(--line);font-size:.79rem;line-height:1.5;color:var(--soft);}
   .pace-line b{color:var(--ink);}
-  .pace-line.on{border-color:var(--olive-2);background:#F2F5EA;}
+  .pace-line.on{border-color:var(--olive-2);background:#EDF2FA;}
   .pace-line.on b{color:var(--olive);}
   .pace-line.behind{border-color:var(--flag);background:#FBF1EE;}
   .pace-line.behind b{color:var(--flag);}
@@ -213,14 +213,14 @@
   .pace-move{margin-top:7px;display:block;width:100%;border:none;border-radius:9px;background:var(--olive);
     color:#F3F4EF;font-family:"Barlow Condensed",sans-serif;font-weight:700;text-transform:uppercase;
     letter-spacing:.05em;font-size:.9rem;padding:9px;cursor:pointer;}
-  .pace-move:hover{background:#33421F;}
+  .pace-move:hover{background:#1F3A63;}
   .bar{height:7px;background:var(--band);border-radius:100px;overflow:hidden;}
   .bar > i{display:block;height:100%;background:var(--olive-2);border-radius:100px;
     width:0;transition:width .6s cubic-bezier(.2,.7,.2,1);}
 
   .banner{background:var(--band);border-radius:12px;padding:14px 18px;margin-bottom:16px;
     font-size:.9rem;display:flex;gap:10px;align-items:flex-start;}
-  .banner.done{background:#DDE7C8;}
+  .banner.done{background:#D6E2F2;}
   .banner .ic{font-size:1.1rem;line-height:1.2;}
   .banner.warn{background:#F3E4DD;color:#7a3520;}
 
@@ -266,7 +266,7 @@
   .complete{width:100%;border:none;border-radius:12px;background:var(--olive);color:#F3F4EF;
     font-family:"Barlow Condensed",sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.05em;
     font-size:1.2rem;padding:15px;cursor:pointer;transition:background .15s,opacity .15s;}
-  .complete:hover{background:#33421F;}
+  .complete:hover{background:#1F3A63;}
   .complete:disabled{opacity:.4;cursor:not-allowed;}
   .miss{color:var(--flag);font-size:.8rem;margin-top:8px;text-align:center;min-height:1em;}
 
@@ -299,7 +299,7 @@
   .day-back:hover{background:var(--band);}
   .supp-day .dot{height:38px;border-radius:8px;background:var(--band);display:flex;flex-direction:column;
     align-items:center;justify-content:center;gap:1px;margin-bottom:4px;padding:2px;}
-  .supp-day .dot.hit{background:#DDE7C8;}
+  .supp-day .dot.hit{background:#D6E2F2;}
   .supp-day .dot .c{font-family:"IBM Plex Mono",monospace;font-size:.6rem;color:var(--olive);font-weight:600;}
   .supp-day .dot .p{font-family:"IBM Plex Mono",monospace;font-size:.6rem;color:var(--ink);}
   .supp-day .lbl{font-family:"IBM Plex Mono",monospace;font-size:.58rem;color:var(--soft);}
@@ -389,7 +389,7 @@
   .auth-card button{width:100%;border:none;border-radius:12px;background:var(--olive);color:#F3F4EF;
     font-family:"Barlow Condensed",sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.05em;
     font-size:1.1rem;padding:14px;cursor:pointer;transition:background .15s,opacity .15s;}
-  .auth-card button:hover{background:#33421F;}
+  .auth-card button:hover{background:#1F3A63;}
   .auth-card button:disabled{opacity:.5;cursor:not-allowed;}
   .auth-note{font-size:.82rem;margin-top:12px;min-height:1em;line-height:1.4;}
   .auth-note.ok{color:var(--olive-2);}
