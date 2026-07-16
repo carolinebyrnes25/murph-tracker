@@ -1,6 +1,6 @@
 import { PHASE1_SESSIONS } from "./config.js";
 import { $, diffColor, fmtDate, iso, joinNames, pick, shortName } from "./util.js";
-import { ORDER, PHASE1, workoutFor } from "./plan.js";
+import { loadBasis, ORDER, PHASE1, workoutFor } from "./plan.js";
 import { actualPace, deloadActive, dlWeight, exWeight, murphDate, myName, planPos, renderAll, save, state, updateAccelAfterSession, updateDeloadAfterSession, vestWeight } from "./store.js";
 
 // The workout for the current plan position, generated from tested capability.
@@ -122,7 +122,7 @@ export function renderNext(){
   const day=w.day;
   const dl=deloadActive();
   let rows=w.ex.map(e=>{
-    const dose=e.w ? (e.dose+' · '+dlWeight(e)+' lb'+(dl?' <span class="deload-tag">deload</span>':'')) : e.dose;
+    const dose=e.w ? (e.dose+' · '+dlWeight(e)+' lb '+loadBasis(e)+(dl?' <span class="deload-tag">deload</span>':'')) : e.dose;
     return '<div class="ex"><div class="row"><span class="name">'+e.name+'</span><span class="dose">'+dose+'</span></div>'+(e.what?'<div class="what">'+e.what+'</div>':'')+(e.note?'<div class="note">'+e.note+'</div>':'')+'</div>';
   }).join("");
   $("next-card").className="next fade-in";
@@ -146,7 +146,7 @@ export function renderWeights(){
     const next = dir==="down" ? Math.max(e.w.step, cur-e.w.step) : dir==="up" ? cur+e.w.step : cur;
     const note = dir==="good" ? "Next time: "+cur+" lb (unchanged)"
                : "Next time: "+next+" lb ("+(dir==="down"?"lighter":"heavier")+")";
-    html+='<div class="wt-row"><div class="wt-head"><span class="wt-name">'+e.name+'</span><span class="wt-cur">'+cur+' lb today</span></div>'+
+    html+='<div class="wt-row"><div class="wt-head"><span class="wt-name">'+e.name+'</span><span class="wt-cur">'+cur+' lb '+loadBasis(e)+' · today</span></div>'+
       '<div class="wt-fb" data-idx="'+i+'">'+
         '<button data-dir="down" class="'+(dir==="down"?"sel down":"")+'">Too heavy</button>'+
         '<button data-dir="good" class="'+(dir==="good"?"sel good":"")+'">Just right</button>'+
