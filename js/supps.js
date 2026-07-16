@@ -48,7 +48,7 @@ export function renderSupps(){
     const hit=s.creatine||s.protein!=null;
     const pShake=s.protein!=null;
     const sel=k===tk?' sel':'';
-    cells.push('<div class="supp-day'+sel+'" data-k="'+k+'" role="button" tabindex="0" title="'+fmtDate(k)+'"><div class="dot'+(hit?' hit':'')+'"><span class="c">'+(s.creatine?'C✓':'·')+'</span><span class="p"'+(pShake?' style="color:var(--olive-2);font-weight:600"':'')+'>'+(pShake?'🥤':'')+'</span></div><div class="lbl">'+shortMD(k)+'</div></div>');
+    cells.push('<div class="supp-day'+sel+'" data-k="'+k+'" role="button" tabindex="0" title="'+fmtDate(k)+'"><div class="dot'+(hit?' hit':'')+'"><span class="c">'+(s.creatine?'C✓':'·')+'</span><span class="p"'+(pShake?' style="color:var(--accent-2);font-weight:600"':'')+'>'+(pShake?'🥤':'')+'</span></div><div class="lbl">'+shortMD(k)+'</div></div>');
   }
   strip.innerHTML=cells.join("");
   const pick=k=>{ selectedDay = (k===todayKey()) ? null : k; renderSupps(); };
