@@ -23,7 +23,7 @@ export function svgLine(el, pts, opts){
   const line="M"+pts.map((p,i)=>x(i).toFixed(1)+","+y(p.y).toFixed(1)).join(" L");
   const area="M"+x(0).toFixed(1)+","+(H-B)+" L"+pts.map((p,i)=>x(i).toFixed(1)+","+y(p.y).toFixed(1)).join(" L")+" L"+x(pts.length-1).toFixed(1)+","+(H-B)+" Z";
   const fmt=opts.fmt||(v=>Math.round(v));
-  const dots=pts.map((p,i)=>'<circle cx="'+x(i).toFixed(1)+'" cy="'+y(p.y).toFixed(1)+'" r="3" fill="var(--olive)"><title>'+p.label+': '+fmt(p.y)+(opts.unit||'')+'</title></circle>').join("");
+  const dots=pts.map((p,i)=>'<circle cx="'+x(i).toFixed(1)+'" cy="'+y(p.y).toFixed(1)+'" r="3" fill="var(--accent)"><title>'+p.label+': '+fmt(p.y)+(opts.unit||'')+'</title></circle>').join("");
   let avg="";
   if(opts.avg!=null){ const ay=y(opts.avg); avg='<line x1="'+L+'" y1="'+ay.toFixed(1)+'" x2="'+(W-R)+'" y2="'+ay.toFixed(1)+'" class="avgline"/><text x="'+(W-R)+'" y="'+(ay-4).toFixed(1)+'" text-anchor="end" class="ax">avg '+fmt(opts.avg)+'</text>'; }
   const midY=T+(H-T-B)/2, midX=L+(W-L-R)/2;
