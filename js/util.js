@@ -1,6 +1,9 @@
 import { NAMES } from "./config.js";
 
 export const $=id=>document.getElementById(id);
+// Difficulty heatmap (easy → hard): its own 4-stop severity ramp, intentionally
+// separate from the brand accent. This function is the single place to retune it.
+// The easy end mirrors the accent blue so it stays on-brand.
 export function diffColor(n){
   if(n<=3)return"#3A66A5"; if(n<=5)return"#6C93C4";
   if(n<=7)return"#C97A2C"; return"#BF4A2B";
