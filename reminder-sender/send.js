@@ -29,7 +29,6 @@ function buildMessage(u, now, todayStr) {
   const weekAgo = now.minus({ days: 7 });
   const last7 = completed.filter(c => c.date && DateTime.fromISO(c.date) >= weekAgo).length;
   const deload = !!(u.deload && u.deload.active);
-  const weeklyTarget = Number(u.daysPerWeek) > 0 ? Number(u.daysPerWeek) : 4; // user's chosen cadence
 
   // 1) App explicitly flagged recovery (last session was maximal or hurt).
   if (u.recoveryDue) {
@@ -39,9 +38,9 @@ function buildMessage(u, now, todayStr) {
   if (trainedToday) {
     return { title: 'Nice work today 💪', body: 'You already trained — now recover. Food, water, and sleep are where the gains happen.' };
   }
-  // 3) Already hit the user's weekly target (respect their chosen cadence even if reminders are daily).
-  if (last7 >= weeklyTarget) {
-    return { title: 'Rest day earned 🙌', body: `You've hit ${last7} session${last7 === 1 ? '' : 's'} in the last week — your goal was ${weeklyTarget}. Take a rest day unless you're feeling fresh.` };
+  // 3) Already hit ~4 sessions this week (respect the 4x/week cadence even if reminders are daily).
+  if (last7 >= 4) {
+    return { title: 'Rest day earned 🙌', body: "You've hit 4 sessions in the last week — plenty. Take a rest day unless you're feeling fresh." };
   }
   // 4) Deload week — still train, but lighter.
   if (deload) {
@@ -62,7 +61,7 @@ function buildMessage(u, now, todayStr) {
     const p = u.reminderPrefs;
     const tokens = Array.isArray(u.fcmTokens) ? u.fcmTokens : [];
     if (p || tokens.length) {
-      console.log(`profile ${docSnap.id.slice(0, 6)}… email=${u.email || '-'} enabled=${!!(p && p.enabled)} days=${p && p.days ? JSON.stringify(p.days) : '-'} time=${p ? p.time : '-'} tz=${p ? p.tz : '-'} tokens=${tokens.length} lastSent=${u.lastReminderSent || '-'} completed=${Array.isArray(u.completed) ? u.completed.length : 0}`);
+      console.log(`profile ${docSnap.id.slice(0, 6)}… enabled=${!!(p && p.enabled)} days=${p && p.days ? JSON.stringify(p.days) : '-'} time=${p ? p.time : '-'} tz=${p ? p.tz : '-'} tokens=${tokens.length}`);
     }
     if (!p || !p.enabled || tokens.length === 0) continue;
 
