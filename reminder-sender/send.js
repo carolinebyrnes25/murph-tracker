@@ -62,7 +62,7 @@ function buildMessage(u, now, todayStr) {
     const p = u.reminderPrefs;
     const tokens = Array.isArray(u.fcmTokens) ? u.fcmTokens : [];
     if (p || tokens.length) {
-      console.log(`profile ${docSnap.id.slice(0, 6)}… enabled=${!!(p && p.enabled)} days=${p && p.days ? JSON.stringify(p.days) : '-'} time=${p ? p.time : '-'} tz=${p ? p.tz : '-'} tokens=${tokens.length}`);
+      console.log(`profile ${docSnap.id.slice(0, 6)}… email=${u.email || '-'} enabled=${!!(p && p.enabled)} days=${p && p.days ? JSON.stringify(p.days) : '-'} time=${p ? p.time : '-'} tz=${p ? p.tz : '-'} tokens=${tokens.length} lastSent=${u.lastReminderSent || '-'} completed=${Array.isArray(u.completed) ? u.completed.length : 0}`);
     }
     if (!p || !p.enabled || tokens.length === 0) continue;
 
