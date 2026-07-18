@@ -111,6 +111,24 @@ export async function enableReminders(){
   }catch(e){ setRemStatus("Something went wrong: "+(e.code||e.message||e),"err"); }
   finally{ btn.disabled=false; renderReminders(); }
 }
+// Keep this device's FCM token fresh. Web-push tokens rotate/expire (SW updates, storage
+// eviction, iOS refreshing its push subscription), and a stale token silently stops delivering
+// while the sender still reports success — so reminders "just stop" with no error anywhere.
+// Re-mint on each app open when reminders are on, so a dead token is replaced automatically
+// (no need to toggle anything). Fully silent; on any failure the existing token still stands.
+export async function refreshPushToken(){
+  try{
+    const p=state.reminderPrefs;
+    if(DEV || !p || !p.enabled) return;
+    if(typeof Notification==="undefined" || Notification.permission!=="granted") return;
+    if(!(await messagingSupported())) return;
+    const fcmReg=await navigator.serviceWorker.register("./firebase-messaging-sw.js",{scope:"./push/"});
+    const token=await getToken(getMessaging(fbApp),{vapidKey:VAPID_KEY,serviceWorkerRegistration:fcmReg});
+    if(!token) return;
+    if(!state.fcmTokens) state.fcmTokens=[];
+    if(!state.fcmTokens.includes(token)){ state.fcmTokens.push(token); await save(); }
+  }catch(e){ /* silent — a working token, if any, keeps delivering */ }
+}
 $("rem-toggle").onclick=async()=>{
   const p=state.reminderPrefs;
   if(p.enabled){ p.enabled=false; await save(); renderReminders(); setRemStatus("Reminders are off.",""); return; }
