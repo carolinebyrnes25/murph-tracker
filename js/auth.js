@@ -4,6 +4,7 @@ import { DEV_KEY, HUSBAND_EMAIL, LEGACY_KEY } from "./config.js";
 import { auth, db, provider } from "./firebase.js";
 import { $, nameFor } from "./util.js";
 import { showView } from "./nav.js";
+import { refreshPushToken } from "./inputs.js";
 import { murphDate, normalizeState, onboardingIncomplete, renderAll, save, seedState, setReady, setState, setUser, setUserRef, user, userRef } from "./store.js";
 
 /* ---------------- Auth ---------------- */
@@ -86,5 +87,6 @@ export async function initUserData(email){
   normalizeState();
   setReady(true);
   renderAll();
+  refreshPushToken();   // re-mint a fresh FCM token so a stale one can't silently kill reminders
   if(onboardingIncomplete()) showView("inputs");   // first run: go set your goal inputs
 }
