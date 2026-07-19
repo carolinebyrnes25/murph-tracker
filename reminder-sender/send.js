@@ -67,11 +67,12 @@ function buildMessage(u, now, todayStr) {
       const p = u.reminderPrefs;
       const tokens = Array.isArray(u.fcmTokens) ? u.fcmTokens : [];
       if (!p || !p.enabled || tokens.length === 0) continue;
+      const msg = { title: 'Murph Tracker ✅', body: 'Test notification — your reminders are working.' };
       for (const token of tokens) {
         try {
           await messaging.send({
             token,
-            data: { title: 'Murph Tracker ✅', body: 'Test notification — your reminders are working.', url: SITE },
+            data: { title: msg.title, body: msg.body, url: SITE },
             webpush: { headers: { Urgency: 'high', TTL: '600' }, fcmOptions: { link: SITE } }
           });
           console.log(`  test -> ${docSnap.id.slice(0, 6)}… ok`);
@@ -80,6 +81,10 @@ function buildMessage(u, now, todayStr) {
           console.log(`  test -> ${docSnap.id.slice(0, 6)}… FAILED (${code})`);
         }
       }
+      // Also seed the in-app fallback so the test is visible in-app even if the push never lands.
+      const day = DateTime.now().setZone('America/New_York').toFormat('yyyy-LL-dd');
+      try { await db.collection('users').doc(docSnap.id).update({ lastReminder: { title: msg.title, body: msg.body, day } }); }
+      catch (e) { /* non-fatal */ }
     }
     console.log('[TEST SEND] done.');
     return;
@@ -145,7 +150,9 @@ function buildMessage(u, now, todayStr) {
     console.log(`Pruned ${deadByUid[uid].length} dead token(s) for ${uid}.`);
   }
   for (const d of due) {
-    try { await db.collection('users').doc(d.uid).update({ lastReminderSent: d.day }); }
+    // Store the message itself (not just the date) so the app can surface the latest reminder
+    // in-app on next open — a reliable fallback when the push never reaches the device.
+    try { await db.collection('users').doc(d.uid).update({ lastReminderSent: d.day, lastReminder: { title: d.message.title, body: d.message.body, day: d.day } }); }
     catch (e) { console.log('mark failed for ' + d.uid.slice(0, 6)); }
   }
   console.log('Done.');

@@ -82,6 +82,10 @@ export function normalizeState(){
   // Profile inputs: preferred name + gender (gender sets the weighted-vest load).
   if(state.name===undefined) state.name=null;
   if(state.gender===undefined) state.gender=null;
+  // In-app reminder fallback: `lastReminder` is written by the sender (server-owned); we only
+  // track which day the user has acknowledged so the same one doesn't nag after dismissal.
+  if(state.lastReminder===undefined) state.lastReminder=null;
+  if(state.lastReminderSeen===undefined) state.lastReminderSeen=null;
 }
 /* ---- Deload cycle: 3 hard sessions (>=8) in a row -> a 4-session lighter block ---- */
 export function deloadActive(){ return !!(state.deload && state.deload.active); }
@@ -158,6 +162,7 @@ export async function save(){
         fcmTokens:state.fcmTokens||[], reminderPrefs:state.reminderPrefs||null,
         coachNote:state.coachNote||null, recoveryDue:!!state.recoveryDue, recoveryReason:state.recoveryReason||null,
         deload:state.deload||{active:false,left:0,cooldown:0}, milestones:state.milestones||{}, benchmarks:state.benchmarks||[],
+        lastReminderSeen:state.lastReminderSeen||null,
         completed:state.completed, supps:state.supps, updatedAt:Date.now()
       }, {merge:true});
     }catch(e){ console.warn("cloud save failed (will retry when online):", e); }

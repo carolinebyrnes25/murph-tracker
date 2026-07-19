@@ -185,6 +185,16 @@
   /* recovery-day card */
   .recovery-card{background:#F3E9DD;border:1px solid #D8B98F;border-radius:16px;padding:18px 20px;margin-bottom:18px;box-shadow:var(--shadow);}
   .recovery-card[hidden]{display:none;}
+  /* in-app reminder fallback (shown when a push may not have been delivered) */
+  .reminder-pop{position:relative;background:var(--accent);color:#F3F4EF;border-radius:14px;
+    padding:15px 44px 15px 18px;margin-bottom:16px;box-shadow:var(--shadow);animation:fade .3s ease both;}
+  .reminder-pop[hidden]{display:none;}
+  .reminder-pop .rp-kicker{font-family:"IBM Plex Mono",monospace;font-size:.62rem;letter-spacing:.14em;text-transform:uppercase;opacity:.82;margin-bottom:6px;}
+  .reminder-pop .rp-title{font-family:"Barlow Condensed",sans-serif;font-weight:700;font-size:1.3rem;line-height:1.08;}
+  .reminder-pop .rp-body{font-size:.9rem;line-height:1.4;margin-top:4px;opacity:.95;}
+  .reminder-pop .rp-x{position:absolute;top:7px;right:11px;background:none;border:none;color:#F3F4EF;
+    font-size:1.5rem;line-height:1;cursor:pointer;opacity:.8;padding:2px 4px;}
+  .reminder-pop .rp-x:hover{opacity:1;}
   .rec-kicker{font-family:"IBM Plex Mono",monospace;font-size:.66rem;letter-spacing:.14em;text-transform:uppercase;color:#8a5a2b;margin-bottom:8px;}
   .recovery-card p{font-size:.92rem;line-height:1.5;color:var(--ink);margin:0 0 14px;}
   .recovery-card b{color:#7a3f12;}
