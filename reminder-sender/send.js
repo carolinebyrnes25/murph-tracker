@@ -14,6 +14,7 @@ const messaging = admin.messaging();
 
 const SITE = 'https://carolinebyrnes25.github.io/murph-tracker/';
 const DRY = process.env.DRY_RUN === '1';
+const TEST = process.env.TEST_SEND === '1';   // on-demand: push a test notification to everyone now
 const ORDER = ['A', 'B', 'C', 'D'];
 const DAYNAME = { A: 'Pull + Run base', B: 'Squat + Intervals', C: 'Push + Pull', D: 'Mixed conditioning' };
 
@@ -55,6 +56,35 @@ function buildMessage(u, now, todayStr) {
   console.log((DRY ? '[DRY RUN] ' : '') + 'Run at ' + DateTime.now().setZone('America/New_York').toFormat('ccc yyyy-LL-dd HH:mm') + ' ET');
   const snap = await db.collection('users').get();
   console.log(`Scanning ${snap.size} user profile(s).`);
+
+  // On-demand test: push a real notification to every enabled profile right now, ignoring the
+  // schedule, and report per-token success/failure. Does NOT mark lastReminderSent. Trigger via
+  // the workflow's "test_send" input to verify end-to-end delivery after opening the app.
+  if (TEST) {
+    console.log('[TEST SEND] pushing a test notification to all enabled profiles (schedule bypassed).');
+    for (const docSnap of snap.docs) {
+      const u = docSnap.data();
+      const p = u.reminderPrefs;
+      const tokens = Array.isArray(u.fcmTokens) ? u.fcmTokens : [];
+      if (!p || !p.enabled || tokens.length === 0) continue;
+      for (const token of tokens) {
+        try {
+          await messaging.send({
+            token,
+            data: { title: 'Murph Tracker ✅', body: 'Test notification — your reminders are working.', url: SITE },
+            webpush: { headers: { Urgency: 'high', TTL: '600' }, fcmOptions: { link: SITE } }
+          });
+          console.log(`  test -> ${docSnap.id.slice(0, 6)}… ok`);
+        } catch (e) {
+          const code = (e.errorInfo && e.errorInfo.code) || e.code || String(e);
+          console.log(`  test -> ${docSnap.id.slice(0, 6)}… FAILED (${code})`);
+        }
+      }
+    }
+    console.log('[TEST SEND] done.');
+    return;
+  }
+
   const due = []; // { uid, tokens, message, day }
 
   for (const docSnap of snap.docs) {
@@ -92,10 +122,14 @@ function buildMessage(u, now, todayStr) {
   for (const d of due) {
     for (const token of d.tokens) {
       try {
+        // Data-only (no `notification` key) so OUR service worker always renders the
+        // notification via onBackgroundMessage — the iOS PWA path that reliably shows.
+        // A `notification` payload delegates display to Safari's built-in handler, which
+        // silently drops on iOS. Urgency:high wakes the device; short TTL avoids next-day pings.
         await messaging.send({
           token,
-          notification: { title: d.message.title, body: d.message.body },
-          webpush: { fcmOptions: { link: SITE } }
+          data: { title: d.message.title, body: d.message.body, url: SITE },
+          webpush: { headers: { Urgency: 'high', TTL: '14400' }, fcmOptions: { link: SITE } }
         });
       } catch (e) {
         const code = (e.errorInfo && e.errorInfo.code) || e.code || String(e);
