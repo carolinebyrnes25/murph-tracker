@@ -9,6 +9,10 @@ on:
         description: 'Dry run: log who would be notified without sending'
         type: boolean
         default: false
+      test_send:
+        description: 'Test send: push a test notification to everyone now (ignores schedule)'
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -30,3 +34,4 @@ jobs:
         env:
           FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
           DRY_RUN: ${{ inputs.dry_run && '1' || '0' }}
+          TEST_SEND: ${{ inputs.test_send && '1' || '0' }}

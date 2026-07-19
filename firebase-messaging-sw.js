@@ -15,12 +15,15 @@ firebase.initializeApp({
 
 const messaging = firebase.messaging();
 
+// The sender delivers data-only messages, so the payload arrives under `data`.
+// (Falls back to `notification` for any legacy message.) We always show a
+// notification here — iOS revokes a subscription that receives silent pushes.
 messaging.onBackgroundMessage((payload) => {
-  const n = payload.notification || {};
-  self.registration.showNotification(n.title || "Murph Tracker", {
-    body: n.body || "Time to train 💪",
+  const d = payload.data || payload.notification || {};
+  self.registration.showNotification(d.title || "Murph Tracker", {
+    body: d.body || "Time to train 💪",
     tag: "murph-reminder",
-    data: { url: "../" }
+    data: { url: d.url || "../" }
   });
 });
 
