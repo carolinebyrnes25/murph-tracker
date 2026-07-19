@@ -8,7 +8,7 @@ import { buildDiff, renderBanner, renderCoachNote, renderNext, renderProgress, r
 import { renderSupps } from "./supps.js";
 import { renderHist } from "./history.js";
 import { renderProgressDash } from "./progress.js";
-import { renderInputs, renderReminders } from "./inputs.js";
+import { renderInputs, renderReminders, renderReminderCatchup } from "./inputs.js";
 
 export function render(){
   if(!ready) return;
@@ -16,7 +16,7 @@ export function render(){
   // re-arms for an existing user who signed in before these fields existed.
   setNavLocked(onboardingIncomplete());
   if(user && !DEV) $("who").textContent=myName();   // reflect the chosen name in the drawer
-  renderRecovery();renderProgress();renderNext();renderWeights();renderHist();renderSupps();renderBanner();renderProgressDash();renderInputs();renderReminders();renderCoachNote();
+  renderRecovery();renderProgress();renderNext();renderWeights();renderHist();renderSupps();renderBanner();renderProgressDash();renderInputs();renderReminders();renderReminderCatchup();renderCoachNote();
 }
 /* ---------------- Boot ---------------- */
 // Register the repaint hook BEFORE anything boots: devInit()/initUserData() call renderAll(),

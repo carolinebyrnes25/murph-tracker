@@ -48,7 +48,7 @@ $("reset").onclick=async()=>{
   if(!confirm("Clear your entire log (workouts + supplements)? This can't be undone."))return;
   // Clear the log; keep profile/settings (bodyweight, weights, goal inputs, reminder setup).
   setState({completed:[],supps:{},plan:"murph-phase1",bodyweight:state.bodyweight||null,weights:state.weights||{},
-    name:state.name||null,gender:state.gender||null,murphDate:state.murphDate||null,daysPerWeek:state.daysPerWeek||null,reminderPrefs:state.reminderPrefs||null,fcmTokens:state.fcmTokens||[]});
+    name:state.name||null,gender:state.gender||null,murphDate:state.murphDate||null,daysPerWeek:state.daysPerWeek||null,reminderPrefs:state.reminderPrefs||null,fcmTokens:state.fcmTokens||[],lastReminder:state.lastReminder||null,lastReminderSeen:state.lastReminderSeen||null});
   normalizeState();
   resetInputs();renderAll();$("copy-panel").classList.remove("show");await save();
 };

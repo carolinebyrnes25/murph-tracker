@@ -73,6 +73,24 @@ export function renderInputs(){
   }; });
   updatePaceReadout();
 }
+/* ---- In-app reminder fallback ----
+   iOS silently drops PWA push, so the reminder the sender queued may never reach the phone.
+   Surface the most recent one as a dismissible banner on the home screen when the user opens
+   the app themselves — a reliable backstop that doesn't depend on push landing at all. */
+function daysAgo(dayStr){ const d=parseYMD(dayStr); if(!d) return Infinity; const t=new Date(); t.setHours(0,0,0,0); return Math.round((t-d)/86400000); }
+export function renderReminderCatchup(){
+  const el=$("reminder-catchup"); if(!el) return;
+  const r=state.lastReminder;
+  // Only surface a fresh reminder (today or yesterday) the user hasn't already dismissed.
+  if(!r || !r.day || state.lastReminderSeen===r.day || daysAgo(r.day)>1){ el.hidden=true; el.innerHTML=""; return; }
+  const esc=s=>String(s==null?"":s).replace(/</g,"&lt;");
+  el.hidden=false;
+  el.innerHTML='<button class="rp-x" aria-label="Dismiss">×</button>'+
+    '<div class="rp-kicker">🔔 Reminder'+(daysAgo(r.day)===1?" · yesterday":"")+'</div>'+
+    '<div class="rp-title">'+esc(r.title)+'</div>'+
+    '<div class="rp-body">'+esc(r.body)+'</div>';
+  el.querySelector(".rp-x").onclick=async()=>{ state.lastReminderSeen=r.day; el.hidden=true; el.innerHTML=""; await save(); };
+}
 export function renderReminders(){
   const btn=$("rem-toggle"); if(!btn) return;
   const p=state.reminderPrefs||{}; const on=!!p.enabled;
