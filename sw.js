@@ -1,7 +1,7 @@
 /* Murph Tracker service worker.
    Goal: every launch loads the NEWEST version when online (network-first, cache-bypassing),
    and the app still opens offline (falls back to the last cached copy). */
-const VERSION = 'murph-sw-v3';
+const VERSION = 'murph-sw-v4';
 const SHELL = ['./', './index.html', './app.css', './js/app.js'];
 
 self.addEventListener('install', (e) => {

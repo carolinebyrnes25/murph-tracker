@@ -9,6 +9,7 @@ import { renderSupps } from "./supps.js";
 import { renderHist } from "./history.js";
 import { renderProgressDash } from "./progress.js";
 import { renderInputs, renderReminders, renderReminderCatchup } from "./inputs.js";
+import { initTheme } from "./theme.js";
 
 export function render(){
   if(!ready) return;
@@ -23,6 +24,7 @@ export function render(){
 // and until this runs that hook is a no-op — the app would load its data and never paint.
 setRenderAll(render);
 
+initTheme();   // reconcile the pre-paint theme, wire the drawer toggle, follow OS changes
 buildDiff();
 if(DEV){
   // localhost: skip auth entirely, load the local test profile.

@@ -17,6 +17,17 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="app.css">
+<script>
+  // Apply the saved dark/light choice (or the OS setting) BEFORE first paint, so the page never
+  // flashes the wrong theme. js/theme.js re-applies this, persists changes, and wires the toggle.
+  (function(){try{
+    var k="murph-theme", s=localStorage.getItem(k);
+    var d=(s==="dark"||s==="light")?s:(matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light");
+    document.documentElement.dataset.theme=d;
+    var m=document.querySelector('meta[name="theme-color"]');
+    if(m) m.setAttribute("content", d==="dark"?"#14171B":"#F3F4EF");
+  }catch(e){}})();
+</script>
 </head>
 <body>
 
@@ -49,6 +60,9 @@
   </ul>
   <p class="nav-lock-note" id="nav-lock-note" hidden>🔒 Finish your setup on <b>Inputs</b> to unlock the rest — your plan is built from those answers.</p>
   <div class="drawer-foot">
+    <button class="mini theme-toggle" id="theme-toggle" type="button" aria-pressed="false">
+      <span class="tt-icon" aria-hidden="true">🌙</span><span class="tt-label">Dark mode</span>
+    </button>
     <div>Signed in as <b id="who"></b></div>
     <button class="mini" id="signout">Sign out</button>
   </div>

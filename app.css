@@ -9,6 +9,25 @@
     --accent-tint-2:#DEE8F5;  /* light accent fill: callout backgrounds */
     --accent-tint-3:#EDF2FA;  /* faint accent fill: subtle highlights */
     --shadow:0 1px 2px rgba(27,30,25,.04),0 8px 24px rgba(27,30,25,.05);
+    /* status surfaces (warn / recovery). Light values here; remapped in the dark block below. */
+    --warn-bg:#F3E4DD; --warn-ink:#7a3520; --warn-bg-soft:#FBF1EE;
+    --amber-bg:#F3E9DD; --amber-border:#D8B98F; --amber-kicker:#8a5a2b;
+    --amber-ink:#7a3f12; --amber-btn:#9a6a2e; --amber-btn-hover:#835723;
+    color-scheme:light;
+  }
+  /* ---- Dark theme: the same tokens, re-mapped. Activated by <html data-theme="dark">, which an
+     inline script in index.html sets before first paint (no flash); js/theme.js persists the
+     choice in localStorage and wires the drawer toggle. Editing colors stays a one-place job. ---- */
+  :root[data-theme="dark"]{
+    --paper:#14171B; --card:#1C2027; --ink:#E7E9E3; --soft:#9BA096;
+    --line:#2C313A; --band:#252A32; --flag:#E06A4C;
+    --accent:#5A86C8; --accent-2:#6E98D6; --accent-3:#8FB2E6;
+    --accent-tint:#26374C; --accent-tint-2:#22303F; --accent-tint-3:#1B2530;
+    --shadow:0 1px 2px rgba(0,0,0,.30),0 10px 26px rgba(0,0,0,.50);
+    --warn-bg:#3A2620; --warn-ink:#F0B9A6; --warn-bg-soft:#2E211D;
+    --amber-bg:#31281C; --amber-border:#5A4A30; --amber-kicker:#D9A867;
+    --amber-ink:#E9C489; --amber-btn:#B07E33; --amber-btn-hover:#C48F3E;
+    color-scheme:dark;
   }
   *{box-sizing:border-box;}
   html{-webkit-text-size-adjust:100%;}
@@ -54,6 +73,8 @@
     gap:10px;font-family:"IBM Plex Mono",monospace;font-size:.72rem;color:var(--soft);}
   .drawer-foot b{color:var(--accent);}
   .drawer-foot .mini{align-self:flex-start;}
+  .theme-toggle{display:inline-flex;align-items:center;gap:7px;}
+  .theme-toggle .tt-icon{font-size:.95rem;line-height:1;}
 
   /* views */
   .view[hidden]{display:none;}
@@ -176,14 +197,14 @@
   .coach-note p.coach-close{color:var(--soft);font-style:italic;margin-top:12px;}
   .coach-rec{background:var(--band);border-radius:10px;padding:12px 14px;font-size:.88rem;line-height:1.45;color:var(--soft);margin:12px 0 2px;}
   .coach-rec b{color:var(--accent);}
-  .coach-flag{background:#F3E4DD;color:#7a3520;border-radius:10px;padding:12px 14px;font-size:.88rem;line-height:1.45;margin:12px 0 2px;}
+  .coach-flag{background:var(--warn-bg);color:var(--warn-ink);border-radius:10px;padding:12px 14px;font-size:.88rem;line-height:1.45;margin:12px 0 2px;}
   /* earned a jump forward for a run of easy sessions */
   .coach-jump{background:var(--accent-tint-2);color:var(--accent-3);border-radius:10px;padding:12px 14px;font-size:.88rem;line-height:1.45;margin:12px 0 2px;}
   .coach-jump b{color:var(--accent);}
   .coach-x{position:absolute;top:10px;right:12px;background:none;border:none;font-size:1.5rem;line-height:1;color:var(--soft);cursor:pointer;padding:2px 6px;}
   .coach-x:hover{color:var(--ink);}
   /* recovery-day card */
-  .recovery-card{background:#F3E9DD;border:1px solid #D8B98F;border-radius:16px;padding:18px 20px;margin-bottom:18px;box-shadow:var(--shadow);}
+  .recovery-card{background:var(--amber-bg);border:1px solid var(--amber-border);border-radius:16px;padding:18px 20px;margin-bottom:18px;box-shadow:var(--shadow);}
   .recovery-card[hidden]{display:none;}
   /* in-app reminder fallback (shown when a push may not have been delivered) */
   .reminder-pop{position:relative;background:var(--accent);color:#F3F4EF;border-radius:14px;
@@ -195,12 +216,12 @@
   .reminder-pop .rp-x{position:absolute;top:7px;right:11px;background:none;border:none;color:#F3F4EF;
     font-size:1.5rem;line-height:1;cursor:pointer;opacity:.8;padding:2px 4px;}
   .reminder-pop .rp-x:hover{opacity:1;}
-  .rec-kicker{font-family:"IBM Plex Mono",monospace;font-size:.66rem;letter-spacing:.14em;text-transform:uppercase;color:#8a5a2b;margin-bottom:8px;}
+  .rec-kicker{font-family:"IBM Plex Mono",monospace;font-size:.66rem;letter-spacing:.14em;text-transform:uppercase;color:var(--amber-kicker);margin-bottom:8px;}
   .recovery-card p{font-size:.92rem;line-height:1.5;color:var(--ink);margin:0 0 14px;}
-  .recovery-card b{color:#7a3f12;}
+  .recovery-card b{color:var(--amber-ink);}
   .rec-actions{display:flex;flex-direction:column;gap:10px;}
-  #rec-rest{background:#9a6a2e;}
-  #rec-rest:hover{background:#835723;}
+  #rec-rest{background:var(--amber-btn);}
+  #rec-rest:hover{background:var(--amber-btn-hover);}
   #rec-proceed{align-self:center;}
   .deload-tag{font-family:"IBM Plex Mono",monospace;font-size:.6rem;letter-spacing:.06em;text-transform:uppercase;
     background:var(--band);color:var(--accent-2);border-radius:5px;padding:1px 5px;margin-left:5px;}
@@ -223,7 +244,7 @@
   .pace-line b{color:var(--ink);}
   .pace-line.on{border-color:var(--accent-2);background:var(--accent-tint-3);}
   .pace-line.on b{color:var(--accent);}
-  .pace-line.behind{border-color:var(--flag);background:#FBF1EE;}
+  .pace-line.behind{border-color:var(--flag);background:var(--warn-bg-soft);}
   .pace-line.behind b{color:var(--flag);}
   /* running far enough ahead to be worth pulling the target date in */
   .pace-ahead{margin-top:8px;padding-top:8px;border-top:1px dashed var(--accent-2);}
@@ -239,7 +260,7 @@
     font-size:.9rem;display:flex;gap:10px;align-items:flex-start;}
   .banner.done{background:var(--accent-tint);}
   .banner .ic{font-size:1.1rem;line-height:1.2;}
-  .banner.warn{background:#F3E4DD;color:#7a3520;}
+  .banner.warn{background:var(--warn-bg);color:var(--warn-ink);}
 
   .next{background:var(--card);border:1px solid var(--line);border-radius:16px;
     box-shadow:var(--shadow);overflow:hidden;margin-bottom:18px;}
@@ -387,7 +408,7 @@
   .copy-panel{margin-top:14px;background:var(--band);border-radius:12px;padding:14px 16px;display:none;}
   .copy-panel.show{display:block;}
   .copy-panel .cmsg{font-size:.8rem;color:var(--soft);margin-bottom:8px;}
-  .copy-panel textarea{background:#fff;min-height:150px;margin-bottom:0;font-family:"IBM Plex Mono",monospace;font-size:.76rem;}
+  .copy-panel textarea{background:var(--card);min-height:150px;margin-bottom:0;font-family:"IBM Plex Mono",monospace;font-size:.76rem;}
 
   footer{margin-top:30px;font-family:"IBM Plex Mono",monospace;font-size:.7rem;color:var(--soft);text-align:center;}
 
