@@ -163,7 +163,7 @@ export function renderConsistency(){
     '<div class="stat"><div class="n">'+state.completed.length+'</div><div class="l">Total sessions</div></div>'+
     '<div class="stat"><div class="n">'+thisWk+'</div><div class="l">This week</div></div>'+
     '<div class="stat"><div class="n">'+best+'</div><div class="l">Best week</div></div></div>';
-  svgBars($("weekly-chart"), weeklyCounts(8), {yLabel:"Sessions logged", xLabel:"Week beginning (Sunday)"});
+  svgBars($("weekly-chart"), weeklyCounts(8), {yLabel:"Sessions logged", xLabel:"Week beginning (Monday)"});
 }
 export function renderDifficultyChart(){
   const el=$("difficulty-chart"); if(!el) return;

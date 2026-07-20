@@ -65,7 +65,8 @@ export function svgBars(el, data, opts){
     bars+ticks+yTitle+xTitle+'</svg>';
 }
 // --- data helpers ---
-export function weekStart(d){ const x=new Date(d); x.setHours(0,0,0,0); x.setDate(x.getDate()-x.getDay()); return x; } // Sunday
+// Monday-start weeks: (getDay()+6)%7 is days-since-Monday (Sun=6, Mon=0 … Sat=5), so subtracting it lands on Monday.
+export function weekStart(d){ const x=new Date(d); x.setHours(0,0,0,0); x.setDate(x.getDate()-((x.getDay()+6)%7)); return x; } // Monday
 export function weeklyCounts(maxN){
   if(!state.completed.length) return [];
   const cur=weekStart(new Date());
