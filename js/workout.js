@@ -244,7 +244,9 @@ $("complete").onclick=async()=>{
   // would tick themselves for work he never did.
   entry.totals={...w0.totals}; entry.phase=w0.phase; entry.nm=w0.nm;
   // Generate the coach's note from this session's feedback.
-  const pain=/\b(hurt|hurts|pain|painful|sharp|tweak|tweaked|strain|strained|pull(ed)?|ache|aching|joint)\b/i.test(entry.notes||"");
+  // NB: no "pull"/"pulled" here — this app is full of pull-ups, pulldowns and "pull volume",
+  // so those words are exercise names, not pain reports. A pulled muscle still trips "strain(ed)".
+  const pain=/\b(hurt|hurts|pain|painful|sharp|tweak|tweaked|strain|strained|ache|aching|joint)\b/i.test(entry.notes||"");
   state.completed.push(entry);
   // Recommend a recovery day after a maximal or painful session.
   state.recoveryDue = (entry.difficulty>=9 || pain);
