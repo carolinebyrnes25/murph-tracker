@@ -18,15 +18,16 @@
  */
 
 const { onRequest } = require('firebase-functions/v2/https');
-const { defineSecret, defineString } = require('firebase-functions/params');
+const { defineSecret } = require('firebase-functions/params');
 const admin = require('firebase-admin');
 
 admin.initializeApp();
 
 const AI_API_KEY = defineSecret('AI_API_KEY');
 // gemini-flash-latest auto-resolves to the current stable Gemini Flash, so we don't have to
-// track version numbers as Google releases new ones. Override via the AI_MODEL param if needed.
-const AI_MODEL = defineString('AI_MODEL', { default: 'gemini-flash-latest' });
+// track version numbers as Google releases new ones. Hardcoded (not a deploy-time param) so the
+// non-interactive CI deploy has nothing to prompt for.
+const AI_MODEL = 'gemini-flash-latest';
 
 // Who may use the AI coach (Google sign-in emails). Everyone else still gets the app's
 // instant rule-based note — they just don't reach the paid endpoint.
@@ -70,7 +71,7 @@ exports.askAI = onRequest(
       const key = AI_API_KEY.value();
       if (!key) { res.status(500).json({ error: 'AI_API_KEY secret is not set.' }); return; }
 
-      const text = await callGemini(AI_MODEL.value() || 'gemini-flash-latest', key, system, messages);
+      const text = await callGemini(AI_MODEL, key, system, messages);
       res.json({ text: text });
     } catch (e) {
       res.status(502).json({ error: (e && e.message) || 'Proxy error.' });
