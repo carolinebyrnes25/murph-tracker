@@ -32,8 +32,25 @@ export function updatePaceReadout(){
   const info=paceInfo(md, dpw, state.completed?state.completed.length:0);
   if(!info){ cap.className="supp-caption"; cap.innerHTML="Pick a target date and weekly cadence to see if you're on track."; return; }
   if(info.onPace){
-    cap.className="supp-caption hit";
-    cap.innerHTML="At <b>"+dpw+" day"+(dpw>1?"s":"")+"/week</b> you'll be Murph-ready by "+fmtDate(iso(md))+" — <b>on track</b> (~"+info.weeksPerPhase+" weeks per phase).";
+    const target=fmtDate(iso(md));
+    if(info.slackWeeks>=3){
+      // The date is LATER than this cadence needs — the program finishes with weeks to spare.
+      // Surface that up front (so "I'm doing exactly 4×/week yet the date keeps moving up" never
+      // comes as a surprise later) and let them reconcile it here rather than on the workout screen.
+      const finishStr=fmtDate(iso(info.finish));
+      const lower = info.suggestedDpw<dpw
+        ? " Keep it as a cushion, or train ~<b>"+info.suggestedDpw+"/week</b> to land on "+target+"."
+        : " Keep it as a cushion, or bring the date in.";
+      cap.className="supp-caption";
+      cap.innerHTML="At <b>"+dpw+" day"+(dpw>1?"s":"")+"/week</b> you'll be Murph-ready around <b>"+finishStr+
+        "</b> — about <b>"+info.slackWeeks+" week"+(info.slackWeeks!==1?"s":"")+"</b> before "+target+"."+lower+
+        '<button type="button" class="pace-move" id="pace-set-finish">Move target to '+finishStr+'</button>';
+      const btn=$("pace-set-finish");
+      if(btn) btn.onclick=()=>{ $("murph-date-in").value=iso(info.finish); updatePaceReadout(); };
+    }else{
+      cap.className="supp-caption hit";
+      cap.innerHTML="At <b>"+dpw+" day"+(dpw>1?"s":"")+"/week</b> you'll be Murph-ready by "+target+" — <b>on track</b> (~"+info.weeksPerPhase+" weeks per phase).";
+    }
   }else{
     const over=info.weeksNeeded-Math.floor(info.weeksUntil);
     cap.className="supp-caption";

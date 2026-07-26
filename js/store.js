@@ -26,7 +26,12 @@ export function paceInfo(md, dpw, completedLen){
   const weeksPerPhase=Math.ceil(16/dpw);
   const onPace=weeksNeeded<=Math.floor(weeksUntil);
   const suggestedDpw=weeksUntil>0?Math.min(7,Math.ceil(sessionsRemaining/weeksUntil)):7;
-  return {weeksUntil,sessionsRemaining,weeksNeeded,weeksPerPhase,onPace,suggestedDpw};
+  // When the program finishes at this cadence, and how many whole weeks of slack that leaves
+  // before the chosen date. This is what lets the Inputs page reconcile "4×/week" with a target
+  // date that's looser than the cadence needs, instead of only flagging a date that's too soon.
+  const finish=new Date(today.getTime()+weeksNeeded*7*86400000);
+  const slackWeeks=Math.floor(weeksUntil)-weeksNeeded;
+  return {weeksUntil,sessionsRemaining,weeksNeeded,weeksPerPhase,onPace,suggestedDpw,finish,slackWeeks};
 }
 // First-run gate: the profile + goal inputs the app personalizes around.
 // Are they ACTUALLY training as often as they said they would? paceInfo() above answers "is the
