@@ -1,4 +1,5 @@
-import { PHASE1_SESSIONS } from "./config.js";
+import { DEV, PHASE1_SESSIONS } from "./config.js";
+import { auth } from "./firebase.js";
 import { $, diffColor, fmtDate, iso, joinNames, pick, shortName } from "./util.js";
 import { loadBasis, ORDER, PHASE1, workoutFor } from "./plan.js";
 import { actualPace, deloadActive, dlWeight, exWeight, murphDate, myName, planPos, renderAll, save, state, updateAccelAfterSession, updateDeloadAfterSession, vestWeight } from "./store.js";
@@ -62,6 +63,55 @@ export function buildCoachHTML(c){
     jump+
     rec+
     '<p class="coach-close">'+closer+'</p>';
+}
+// ---- AI coach note ----
+// A protected Gemini proxy (Cloud Function) holds the API key server-side and only serves
+// allow-listed, signed-in accounts — same setup as the baby-answers / byrnes-finance apps.
+const AI_FN_URL="https://us-central1-murph-tracker-c94db.cloudfunctions.net/askAI";
+function esc(s){ return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+// Wrap the AI's plain-text reply into the same card shell buildCoachHTML uses, so the
+// dismiss button + kicker keep working. Text is escaped — model output is never trusted as HTML.
+function buildAICoachCard(dayName, text){
+  const paras=String(text).trim().split(/\n\s*\n/).map(p=>p.trim()).filter(Boolean);
+  const body=(paras.length?paras:[String(text)]).map(p=>'<p>'+esc(p).replace(/\n/g,"<br>")+'</p>').join("");
+  return '<button class="coach-x" aria-label="Dismiss">×</button>'+
+    '<div class="coach-kicker">Coach\'s note · '+esc(dayName)+'</div>'+body;
+}
+// Best-effort upgrade: rewrite the note so it actually responds to what the athlete typed.
+// If anything fails (offline, dev, not allow-listed, proxy error) the instant rule-based
+// note that's already on screen simply stands.
+export async function enhanceCoachNote(session, ctx){
+  if(DEV) return;                                    // dev mode runs offline of Firebase/AI
+  const u=auth&&auth.currentUser; if(!u) return;
+  const system=[
+    "You are an encouraging, knowledgeable strength & conditioning coach writing a short post-workout note to "+ctx.name+", who is training for the Murph workout (1-mile run, then 100 pull-ups, 200 push-ups, 300 squats, then a 1-mile run).",
+    "Write 2-3 short paragraphs, warm and direct, in plain text only — no markdown, no bullet lists, at most one emoji. Address "+ctx.name+" by name once.",
+    "MOST IMPORTANT: read their written feedback and respond to the SPECIFICS of what they actually did. If they did more volume than prescribed, or a harder variation than prescribed (for example unassisted pull-ups instead of assisted, or full floor push-ups instead of incline), explicitly acknowledge that they went above and beyond, and tell them you'll make the next sessions harder to match.",
+    "The current plan position is Phase "+ctx.phase+(ctx.phaseName?" ("+ctx.phaseName+")":"")+". Phase 1 (Foundation) deliberately uses SCALED movements — assisted or band pull-ups, incline push-ups, jog/walk intervals. If the athlete reports comfortably doing the UNSCALED harder versions (real unassisted pull-ups, floor push-ups, continuous running) or clearly found the session easy, tell them they may have outgrown the scaling and should log a Benchmark test in the app — passing it advances them to the next phase, which unlocks harder workouts. Only bring up the benchmark test when their feedback genuinely signals they're ready.",
+    "Treat the difficulty rating as ONE signal, not the whole story — their written notes matter more. Never contradict what they wrote.",
+    (ctx.pain?"They flagged something that hurt — gently suggest easing off that movement and watching for sharp or joint pain, without being alarmist.":""),
+    (ctx.jumped?"They earned a jump forward in the plan for a run of easy sessions — congratulate them on it.":""),
+    "End on an encouraging note. Never invent facts you weren't given."
+  ].filter(Boolean).join("\n");
+  const userMsg=[
+    "Day: "+ctx.dayName+(ctx.tag?" — "+ctx.tag:""),
+    "Prescribed today:\n- "+(ctx.prescribed.length?ctx.prescribed.join("\n- "):"(as listed)"),
+    "Difficulty they rated it: "+ctx.difficulty+"/10",
+    (ctx.changes.length?"Weight adjustments for next time:\n- "+ctx.changes.join("\n- "):""),
+    "Their written feedback: "+(ctx.notes?('"'+ctx.notes+'"'):"(none entered)")
+  ].filter(Boolean).join("\n\n");
+  try{
+    const token=await u.getIdToken();
+    const r=await fetch(AI_FN_URL,{method:"POST",
+      headers:{"content-type":"application/json","Authorization":"Bearer "+token},
+      body:JSON.stringify({system, messages:[{role:"user", content:userMsg}]})});
+    const j=await r.json().catch(()=>null);
+    if(!r.ok || !j || !j.text || !j.text.trim()) return;      // keep the rule-based note
+    if(!state.coachNote || state.coachNote.session!==session) return;  // a newer session was logged
+    state.coachNote.html=buildAICoachCard(ctx.dayName, j.text.trim());
+    state.coachNote.ai=true;
+    renderCoachNote(); await save();
+  }catch(e){ /* offline or blocked — the instant note stands */ }
 }
 export function renderCoachNote(){
   const el=$("coach-note"); if(!el) return;
@@ -256,9 +306,22 @@ $("complete").onclick=async()=>{
   // Then the mirror: a run of easy sessions jumps him forward. Deload runs first so a deload that
   // just started blocks a jump in the same breath.
   const jumped=updateAccelAfterSession(pain);
+  // Instant, deterministic note — shows immediately and stays as the fallback if the AI
+  // note never lands (offline, dev mode, not allow-listed, or the proxy erroring). `aiCtx`
+  // is the full picture the AI coach reads to write a note that responds to the free-text.
+  const aiCtx={
+    name:myName(),
+    dayName:w0.nm, tag:w0.tag||"", phase:w0.phase, phaseName:w0.phaseName||"",
+    difficulty:entry.difficulty,
+    notes:entry.notes||"",
+    prescribed:(w0.ex||[]).map(e=>e.name+" — "+e.dose),
+    changes:(changes||[]).map(c=>shortName(c.name)+": "+c.from+"→"+c.to+" lb ("+c.dir+")"),
+    pain, jumped
+  };
   state.coachNote={ session:entry.session, html:buildCoachHTML({day,nm:w0.nm,difficulty:entry.difficulty,changes,pain,jumped}) };
   resetInputs(); renderAll(); await save();
   const cn=$("coach-note");
   if(cn && !cn.hidden) cn.scrollIntoView({behavior:"smooth",block:"center"});
   else window.scrollTo({top:0,behavior:"smooth"});
+  enhanceCoachNote(entry.session, aiCtx);   // fire-and-forget upgrade to an AI-written note
 };

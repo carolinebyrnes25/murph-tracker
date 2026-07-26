@@ -3,6 +3,9 @@
 Vanilla web app, no build step — GitHub Pages serves these files as-is.
 State lives in `state` and persists to Firebase (Firestore) in prod, `localStorage` in dev.
 
+Two server-side pieces live outside the static site: `reminder-sender/` (push notifications, run
+on a GitHub Actions cron) and `functions/` (a Firebase Cloud Function AI proxy — see "AI coach note").
+
 ## Layout — work in the ONE file your feature owns
 
 ```
@@ -97,3 +100,21 @@ the Inputs page on boot. The bodyweight trend chart and `weightLog` were removed
 - Protein: toggle = "had a shake" (48g, `SHAKE_G`). Presence of `protein` means a
   shake was logged that day; absence means none. (Older data may hold arbitrary gram
   values from the previous free-text input — treated as "shake logged".)
+
+## AI coach note (`functions/` + `js/workout.js`)
+
+After a session is logged, `workout.js` shows an instant rule-based "Coach's note"
+(`buildCoachHTML`) and then calls `enhanceCoachNote()`, which asks Gemini to rewrite the note so
+it actually responds to the athlete's free-text feedback (e.g. "I did unassisted pull-ups instead
+of assisted"). It's fire-and-forget and best-effort: if the call fails (offline, dev mode, not
+allow-listed, proxy error) the instant note stands. In DEV it's skipped entirely.
+
+- The key-holder is `functions/index.js` — a Firebase Cloud Function (`askAI`) that mirrors the
+  baby-answers / byrnes-finance Ask-AI proxies: `onRequest`, CORS to the GitHub Pages origin,
+  Firebase ID-token auth + an allow-list, and the Gemini key as the `AI_API_KEY` Cloud Functions
+  secret. Model: `gemini-flash-latest` with `thinkingConfig.thinkingBudget: 0`.
+- The browser builds the coaching `system` prompt + session summary; the function is just the
+  protected model call. Keep coaching logic in `workout.js`, not in `functions/`.
+- Deploy: push to `functions/**` triggers `.github/workflows/deploy-functions.yml`
+  (`firebase deploy --only functions`, auth via the existing `FIREBASE_SERVICE_ACCOUNT` secret).
+  The `AI_API_KEY` secret is set once with `firebase functions:secrets:set AI_API_KEY`.
