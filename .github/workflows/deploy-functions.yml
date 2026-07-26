@@ -1,0 +1,46 @@
+name: Deploy Cloud Function
+
+# Auto-deploys the coach-note backend (functions/askAI) whenever functions/** changes on
+# main, and can be run on demand from the Actions tab. Auth uses the same FIREBASE_SERVICE_ACCOUNT
+# repo secret the reminder job already uses. The Gemini key (AI_API_KEY) is a Cloud Functions
+# secret set once in the project (firebase functions:secrets:set AI_API_KEY) — NOT needed here.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'functions/**'
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+# If several deploys are queued, cancel older ones so the newest code wins.
+concurrency:
+  group: deploy-functions
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install function dependencies
+        run: npm install
+        working-directory: functions
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+
+      - name: Install Firebase CLI
+        run: npm install -g firebase-tools
+
+      - name: Deploy functions
+        run: firebase deploy --only functions --project murph-tracker-c94db --non-interactive --force

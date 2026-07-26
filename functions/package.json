@@ -1,0 +1,11 @@
+{
+  "name": "murph-tracker-functions",
+  "description": "AI coach-note proxy for the Murph Tracker app (holds the Gemini key server-side)",
+  "private": true,
+  "engines": { "node": "22" },
+  "main": "index.js",
+  "dependencies": {
+    "firebase-admin": "^12.6.0",
+    "firebase-functions": "^5.1.0"
+  }
+}
