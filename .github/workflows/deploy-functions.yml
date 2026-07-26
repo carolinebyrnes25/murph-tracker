@@ -1,9 +1,15 @@
 name: Deploy Cloud Function
 
 # Auto-deploys the coach-note backend (functions/askAI) whenever functions/** changes on
-# main, and can be run on demand from the Actions tab. Auth uses the same FIREBASE_SERVICE_ACCOUNT
-# repo secret the reminder job already uses. The Gemini key (AI_API_KEY) is a Cloud Functions
-# secret set once in the project (firebase functions:secrets:set AI_API_KEY) — NOT needed here.
+# main, and can be run on demand from the Actions tab.
+#
+# Auth uses a FIREBASE_TOKEN repo secret (from `firebase login:ci`), same as the
+# byrnes-finance repo — it deploys as the owner, so it can enable the required Google
+# APIs and deploy functions without extra service-account IAM setup. (The reminder job's
+# FIREBASE_SERVICE_ACCOUNT is scoped to Firestore/FCM only and can't deploy functions.)
+#
+# The Gemini key (AI_API_KEY) is a Cloud Functions secret set once in the project
+# (firebase functions:secrets:set AI_API_KEY) — it is NOT needed here.
 
 on:
   push:
@@ -34,13 +40,10 @@ jobs:
         run: npm install
         working-directory: functions
 
-      - name: Authenticate to Google Cloud
-        uses: google-github-actions/auth@v2
-        with:
-          credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
-
       - name: Install Firebase CLI
         run: npm install -g firebase-tools
 
       - name: Deploy functions
-        run: firebase deploy --only functions --project murph-tracker-c94db --non-interactive --force
+        env:
+          FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
+        run: firebase deploy --only functions --project murph-tracker-c94db --non-interactive --force --token "$FIREBASE_TOKEN"
