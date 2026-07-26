@@ -4,6 +4,10 @@ Running log of what's been built and what's open, so a fresh session (or Carolin
 without re-deriving everything. Newest work at the top. See `CLAUDE.md` for the architecture and
 module layout; this file is state + history + gotchas.
 
+## Working preferences (Caroline)
+- **Always merge PRs automatically** — don't ask "want me to merge?"; just open the PR and merge it.
+- **Skip positive-affirmation preambles** ("great question", "sharp observation", etc.) — get to the answer.
+
 ## What this app is
 - Vanilla JS PWA (no build step), served by **GitHub Pages** at
   `https://carolinebyrnes25.github.io/murph-tracker/`.
