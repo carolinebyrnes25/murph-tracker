@@ -41,6 +41,15 @@ export const PHASE1 = {
 };
 export const ORDER=["A","B","C","D"];
 
+/* ---------------- Core finisher (every session) ----------------
+   A 3-minute abs block tacked onto the end of every workout — extra core work on top of the
+   prescription, never replacing any of it. It builds toward a stronger midline (and a six-pack)
+   without touching Murph `totals`: abs aren't a Murph movement, so this scores 0 and never trips a
+   milestone. No `w` field, so it also stays out of the weight-feedback UI. */
+export const ABS_FINISHER={name:"Abs finisher",dose:"3 min",
+  what:"Three straight minutes of core to close out the session — plank, hollow holds, leg raises, bicycle crunches. Mix them however you like; keep moving the whole time.",
+  note:"Every session, on top of the work above — this is what builds the six-pack by race day."};
+
 /* ---------------- Capability gates ----------------
    Phase advancement is earned by TESTED capability, never by sessions counted. Someone who has
    logged 40 foundation sessions but still can't do a pull-up is not ready for Murph rounds, and
@@ -192,7 +201,9 @@ export function workoutFor(pos, benchmarks, vest){
   const days = ph===1 ? PHASE1 : ph===2 ? phase2(c) : ph===3 ? phase3(c) : phase4(c, vest||20);
   const day=ORDER[pos%4];
   const w=days[day];
-  return {...w, day, phase:ph, phaseName:PHASE_NAMES[ph]};
+  // Append the 3-min abs finisher to every day. New array (not a mutation of the shared PHASE1
+  // const), and `totals` is left untouched so milestone auto-checks are unaffected.
+  return {...w, ex:[...w.ex, ABS_FINISHER], day, phase:ph, phaseName:PHASE_NAMES[ph]};
 }
 export function weightedForDay(day, benchmarks, vest){
   return (workoutFor(ORDER.indexOf(day), benchmarks, vest).ex||[]).filter(e=>e.w);
