@@ -21,6 +21,16 @@ module layout; this file is state + history + gotchas.
 
 ## Session history (most recent first)
 
+### 3-min abs finisher on every workout (merged; Pages deploy)
+- PR #25. Luke wanted core work in every session (six-pack by race day). Added `ABS_FINISHER`
+  (3 min, athlete's-choice core) in `js/plan.js`, appended to `ex` at the single choke point in
+  `workoutFor()` so it lands on every day of every phase without editing the 16 day defs. It's
+  additive, never replacing the prescription.
+- Kept out of `totals` (abs score 0 toward Murph milestones) and has no `w` field (stays out of the
+  weight-feedback UI). Returns a new `ex` array so the shared `PHASE1` const isn't mutated.
+- Applied to **all** users — there's no per-user workout customization, and core work helps
+  everyone's Murph prep. Gate to Luke only if that ever matters.
+
 ### AI coach note — Gemini Flash (LIVE)
 - After a workout is logged, `js/workout.js` shows the instant rule-based note, then
   `enhanceCoachNote()` calls a Cloud Function that asks **Gemini** to rewrite it so it responds to
